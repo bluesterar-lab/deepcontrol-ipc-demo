@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 interface BuildingAnimationProps {
   scene: number;
@@ -32,9 +32,85 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   const timeRef = useRef<number>(0);
   const animationTimeRef = useRef<number>(0);
   const sceneRef = useRef<number>(scene);
+  const [isMounted, setIsMounted] = useState(false);
   
   // 全局缩放因子
   const scale = 1.0;
+  
+  // 确保只在客户端渲染
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // 检测场景变化
+  useEffect(() => {
+    if (sceneRef.current !== scene) {
+      sceneRef.current = scene;
+      animationTimeRef.current = 0;
+      timeRef.current = 0;
+    }
+  }, [scene]);
+  
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+
+    const resizeCanvas = () => {
+      const rect = canvas.parentElement?.getBoundingClientRect();
+      if (rect) {
+        canvasWidth = rect.width * 2;
+        canvasHeight = rect.height * 2;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        canvas.style.width = rect.width + 'px';
+        canvas.style.height = rect.height + 'px';
+      }
+    };
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const animate = (timestamp: number) => {
+      if (!timeRef.current) {
+        timeRef.current = timestamp;
+      }
+      
+      const deltaTime = timestamp - timeRef.current;
+      timeRef.current = timestamp;
+      
+      // 加快动画速度（翻倍）
+      animationTimeRef.current += deltaTime * 0.002;
+      
+      drawScene(ctx, canvasWidth, canvasHeight, animationTimeRef.current, scale);
+      
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isMounted]);
+  
+  if (!isMounted) {
+    return (
+      <div className="w-full h-full relative bg-slate-900 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
   
   // ==================== 绘制辅助函数 ====================
   
@@ -125,7 +201,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
                            time: number, color: string = colors.neonBlue) => {
     if (path.length < 2) return;
     
-    // 增加粒子数量和动画速度，使效果更明显
+    // 增加粒子数量和动画速度
     for (let i = 0; i < 30; i++) {
       const progress = ((time * 5 + i / 30) % 1);
       const segmentIndex = Math.floor(progress * (path.length - 1));
@@ -267,7 +343,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     
     // 从DeepControl扩散出的智能波 - 加快速度
     const waveRadius = (time % 1.5) * 150 * scale + 20 * scale;
-    const waveAlpha = 1 - ((time % 2) / 2);
+    const waveAlpha = 1 - ((time % 1.5) / 1.5);
     ctx.strokeStyle = colors.success + Math.floor(waveAlpha * 100).toString(16).padStart(2, '0');
     ctx.lineWidth = 2 * scale;
     ctx.beginPath();
@@ -732,7 +808,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     // 节能数字 - 加快动画速度
     const energySaving = 45;
     const currentAngle = (time % 1.5) * Math.PI;
-    const displaySaving = Math.floor(energySaving * (time % 2));
+    const displaySaving = Math.floor(energySaving * (time % 1.5));
     
     ctx.fillStyle = colors.success;
     ctx.font = `bold ${48 * scale}px system-ui`;
@@ -820,68 +896,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         drawScene1(ctx, cx, cy, time, scale);
     }
   };
-
-  // ==================== useEffect ====================
-  
-  // 检测场景变化
-  useEffect(() => {
-    if (sceneRef.current !== scene) {
-      sceneRef.current = scene;
-      animationTimeRef.current = 0;
-      timeRef.current = 0;
-    }
-  }, [scene]);
-  
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let canvasWidth = 0;
-    let canvasHeight = 0;
-
-    const resizeCanvas = () => {
-      const rect = canvas.parentElement?.getBoundingClientRect();
-      if (rect) {
-        canvasWidth = rect.width * 2;
-        canvasHeight = rect.height * 2;
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        canvas.style.width = rect.width + 'px';
-        canvas.style.height = rect.height + 'px';
-      }
-    };
-    
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    const animate = (timestamp: number) => {
-      if (!timeRef.current) {
-        timeRef.current = timestamp;
-      }
-      
-      const deltaTime = timestamp - timeRef.current;
-      timeRef.current = timestamp;
-      
-      // 加快动画速度（翻倍）
-      animationTimeRef.current += deltaTime * 0.002;
-      
-      drawScene(ctx, canvasWidth, canvasHeight, animationTimeRef.current, scale);
-      
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="w-full h-full relative bg-slate-900" style={{ minHeight: '600px' }}>
