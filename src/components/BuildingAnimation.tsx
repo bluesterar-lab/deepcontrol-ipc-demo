@@ -49,14 +49,20 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // 存储画布实际尺寸
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+
     const resizeCanvas = () => {
       const rect = canvas.parentElement?.getBoundingClientRect();
       if (rect) {
-        canvas.width = rect.width * 2;
-        canvas.height = rect.height * 2;
+        canvasWidth = rect.width * 2;
+        canvasHeight = rect.height * 2;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
         canvas.style.width = rect.width + 'px';
         canvas.style.height = rect.height + 'px';
-        ctx.scale(2, 2);
+        // 不使用 scale，直接使用完整画布尺寸
       }
     };
     
@@ -73,7 +79,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       
       animationTimeRef.current += deltaTime * 0.001;
       
-      drawScene(ctx, canvas.width / 2, canvas.height / 2, animationTimeRef.current);
+      // 传入完整画布尺寸，不除以2
+      drawScene(ctx, canvasWidth, canvasHeight, animationTimeRef.current);
       
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -248,28 +255,33 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   };
 
   // 绘制主场景
-  const drawScene = (ctx: CanvasRenderingContext2D, centerX: number, centerY: number, time: number) => {
-    ctx.clearRect(0, 0, centerX * 2, centerY * 2);
+  const drawScene = (ctx: CanvasRenderingContext2D, width: number, height: number, time: number) => {
+    ctx.clearRect(0, 0, width, height);
     
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    // 背景
     const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, centerY);
     gradient.addColorStop(0, '#0a1628');
     gradient.addColorStop(1, '#050a14');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, centerX * 2, centerY * 2);
+    ctx.fillRect(0, 0, width, height);
 
+    // 网格背景
     ctx.strokeStyle = colors.neonBlueDim;
     ctx.lineWidth = 0.5;
     const gridSize = 30;
-    for (let x = 0; x < centerX * 2; x += gridSize) {
+    for (let x = 0; x < width; x += gridSize) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
-      ctx.lineTo(x, centerY * 2);
+      ctx.lineTo(x, height);
       ctx.stroke();
     }
-    for (let y = 0; y < centerY * 2; y += gridSize) {
+    for (let y = 0; y < height; y += gridSize) {
       ctx.beginPath();
       ctx.moveTo(0, y);
-      ctx.lineTo(centerX * 2, y);
+      ctx.lineTo(width, y);
       ctx.stroke();
     }
 
