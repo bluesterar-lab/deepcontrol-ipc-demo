@@ -51,7 +51,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     };
 
-    // 场景1：传统方案痛点
+    // 场景1：传统方案痛点（简化版）
     const drawScene1 = (width: number, height: number, time: number, alpha: number = 1) => {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = '#0f172a';
@@ -61,93 +61,94 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerY = height / 2;
 
       ctx.fillStyle = '#ef4444';
-      ctx.font = 'bold 20px system-ui, sans-serif';
+      ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('传统PID控制的问题', centerX, 50);
+      ctx.fillText('传统PID控制的三大痛点', centerX, 60);
 
+      // 核心问题卡片
+      const problems = [
+        { 
+          title: '压力振荡大', 
+          desc: '阶跃响应超调>30%，振荡周期长',
+          value: '±15%',
+          color: '#ef4444'
+        },
+        { 
+          title: '响应延迟', 
+          desc: '信号传输+处理耗时，无法实时调节',
+          value: '1.5s',
+          color: '#f97316'
+        },
+        { 
+          title: '能效偏低', 
+          desc: '无法适应负载变化，能耗浪费',
+          value: '65%',
+          color: '#eab308'
+        }
+      ];
+
+      problems.forEach((prob, i) => {
+        const px = centerX - 140 + i * 140;
+        const py = centerY;
+        
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(px - 60, py - 70, 120, 140);
+        ctx.strokeStyle = prob.color;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(px - 60, py - 70, 120, 140);
+
+        ctx.fillStyle = prob.color;
+        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(prob.title, px, py - 45);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px system-ui, sans-serif';
+        ctx.fillText(prob.value, px, py);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.fillText(prob.desc, px, py + 40);
+      });
+
+      // 压力振荡示意图
+      const oscillationBoxY = centerY + 90;
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 2;
-      ctx.strokeRect(centerX - 120, centerY - 180, 240, 280);
-
-      for (let i = 1; i < 5; i++) {
-        ctx.beginPath();
-        ctx.moveTo(centerX - 120, centerY - 180 + i * 55);
-        ctx.lineTo(centerX + 120, centerY - 180 + i * 55);
-        ctx.stroke();
-      }
-
-      ctx.strokeStyle = '#64748b';
-      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(centerX + 120, centerY + 100);
-      ctx.lineTo(centerX + 180, centerY + 100);
-      ctx.lineTo(centerX + 180, centerY - 150);
-      ctx.lineTo(centerX, centerY - 150);
-      ctx.lineTo(centerX, centerY + 100);
+      ctx.moveTo(centerX - 120, oscillationBoxY);
+      ctx.lineTo(centerX + 120, oscillationBoxY);
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.moveTo(centerX - 80, centerY + 120);
-      for (let x = 0; x < 160; x += 3) {
-        const oscillation = Math.sin(time * 4 + x * 0.08) * 25 * Math.exp(-x * 0.008);
-        ctx.lineTo(centerX - 80 + x, centerY + 120 + oscillation);
+      ctx.moveTo(centerX - 120, oscillationBoxY);
+      for (let x = 0; x < 240; x += 3) {
+        const targetY = oscillationBoxY - 30;
+        const oscillation = Math.sin(time * 3 + x * 0.05) * 25 * Math.exp(-x * 0.01);
+        ctx.lineTo(centerX - 120 + x, oscillationBoxY + oscillation);
       }
       ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      ctx.fillStyle = '#ef4444';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText('压力阶跃响应振荡', centerX, centerY + 145);
-
-      for (let i = 0; i < 5; i++) {
-        const y = centerY - 155 + i * 55;
-        const basePressure = i === 0 ? 80 : i === 1 ? 70 : i === 2 ? 40 : i === 3 ? 20 : 10;
-        const fluctuation = Math.sin(time * 5 + i) * 15;
-        const barWidth = Math.max(10, basePressure + fluctuation);
-        
-        ctx.fillStyle = i <= 1 ? '#ef4444' : i === 2 ? '#f97316' : '#eab308';
-        ctx.fillRect(centerX + 180, y + 10, barWidth, 35);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px system-ui, sans-serif';
-        ctx.fillText(`${i + 1}楼`, centerX + 180 + barWidth + 8, y + 32);
-        
-        ctx.font = '11px system-ui, sans-serif';
-        const status = i <= 1 ? '超压' : i === 2 ? '不足' : '严重不足';
-        ctx.fillStyle = i <= 1 ? '#ef4444' : i === 2 ? '#f97316' : '#eab308';
-        ctx.fillText(status, centerX + 180 + barWidth + 45, y + 32);
-      }
-
-      const flowOffset = (time * 2) % 60;
-      for (let i = 0; i < 3; i++) {
-        const fy = centerY + 70 + (flowOffset + i * 20) % 60 - 30;
-        ctx.beginPath();
-        ctx.moveTo(centerX + 140, fy);
-        ctx.lineTo(centerX + 150, fy - 5);
-        ctx.lineTo(centerX + 150, fy + 5);
-        ctx.closePath();
-        ctx.fillStyle = '#38bdf8';
-        ctx.fill();
-      }
-
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(centerX - 80, centerY - 200, 160, 40);
-      
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 14px system-ui, sans-serif';
-      ctx.fillText('水力失衡', centerX, centerY - 175);
+      // 目标线
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(centerX - 120, oscillationBoxY - 30);
+      ctx.lineTo(centerX + 120, oscillationBoxY - 30);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
       ctx.fillStyle = '#64748b';
       ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText(`能效: ${(65 + Math.sin(time) * 5).toFixed(1)}%`, centerX - 100, centerY + 180);
-      ctx.fillText(`响应延迟: ${(1.5 + Math.sin(time * 2) * 0.3).toFixed(1)}s`, centerX + 100, centerY + 180);
-      
+      ctx.fillText('压力响应振荡曲线', centerX, oscillationBoxY + 60);
+
       ctx.globalAlpha = 1;
     };
 
-    // 场景2：DeepControl系统介入
+    // 场景2：DeepControl系统架构（流程图式）
     const drawScene2 = (width: number, height: number, time: number, alpha: number = 1) => {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = '#0f172a';
@@ -157,126 +158,168 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerY = height / 2;
 
       ctx.fillStyle = '#3b82f6';
-      ctx.font = 'bold 20px system-ui, sans-serif';
+      ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('DeepControl AIPC 系统架构', centerX, 50);
+      ctx.fillText('DeepControl AIPC 系统架构流程', centerX, 40);
 
-      const layers = [
-        { name: '应用层', desc: '监控与控制', color: '#3b82f6', y: centerY - 140 },
-        { name: '算法层', desc: 'MPC优化算法', color: '#0ea5e9', y: centerY - 70 },
-        { name: '数据层', desc: '数据存储分析', color: '#06b6d4', y: centerY },
-        { name: '通信层', desc: '4G/以太网', color: '#10b981', y: centerY + 70 },
-        { name: '感知层', desc: '传感器采集', color: '#22c55e', y: centerY + 140 }
+      // 系统流程节点
+      const nodes = [
+        { name: '感知层', desc: '压力/流量传感器', icon: '📡', x: centerX, y: centerY - 110, color: '#22c55e' },
+        { name: '通信层', desc: '4G/以太网传输', icon: '📶', x: centerX, y: centerY - 55, color: '#10b981' },
+        { name: '数据层', desc: '云端数据存储', icon: '☁️', x: centerX, y: centerY, color: '#06b6d4' },
+        { name: '算法层', desc: 'MPC优化算法', icon: '🧮', x: centerX, y: centerY + 55, color: '#0ea5e9' },
+        { name: '应用层', desc: '智能控制决策', icon: '🎯', x: centerX, y: centerY + 110, color: '#3b82f6' }
       ];
 
-      layers.forEach((layer, index) => {
-        const pulse = 1 + Math.sin(time * 2 + index * 0.6) * 0.06;
-        
-        ctx.save();
-        ctx.translate(centerX, layer.y);
-        ctx.scale(pulse, pulse);
-
-        ctx.fillStyle = layer.color;
-        ctx.fillRect(-120, -30, 240, 60);
-        
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-120, -30, 240, 60);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(layer.name, 0, -5);
-
-        ctx.font = '12px system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.fillText(layer.desc, 0, 15);
-
-        ctx.restore();
-
-        if (index < layers.length - 1) {
+      // 绘制连接线和数据流动画
+      nodes.forEach((node, i) => {
+        if (i < nodes.length - 1) {
+          // 连接线
           ctx.beginPath();
-          ctx.moveTo(centerX, layer.y + 30);
-          ctx.lineTo(centerX, layers[index + 1].y - 30);
+          ctx.moveTo(node.x, node.y + 25);
+          ctx.lineTo(nodes[i + 1].x, nodes[i + 1].y - 25);
           ctx.strokeStyle = '#475569';
           ctx.lineWidth = 2;
           ctx.stroke();
 
+          // 数据流动画点
+          const flowPos = (time * 2 + i * 0.2) % 1;
+          const flowY = node.y + 25 + flowPos * (nodes[i + 1].y - node.y - 50);
+          
           ctx.beginPath();
-          ctx.moveTo(centerX - 10, layers[index + 1].y - 35);
-          ctx.lineTo(centerX, layers[index + 1].y - 28);
-          ctx.lineTo(centerX + 10, layers[index + 1].y - 35);
-          ctx.strokeStyle = '#475569';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          const dataPos = (time * 2 + index * 0.3) % 1;
-          const dataY = layer.y + 30 + dataPos * (layers[index + 1].y - layer.y - 60);
-          ctx.beginPath();
-          ctx.arc(centerX, dataY, 6, 0, Math.PI * 2);
+          ctx.arc(node.x, flowY, 5, 0, Math.PI * 2);
           ctx.fillStyle = '#60a5fa';
           ctx.fill();
+          
+          // 流动箭头
           ctx.beginPath();
-          ctx.arc(centerX, dataY, 3, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffffff';
+          ctx.moveTo(node.x - 4, flowY - 3);
+          ctx.lineTo(node.x, flowY + 4);
+          ctx.lineTo(node.x + 4, flowY - 3);
+          ctx.fillStyle = '#60a5fa';
           ctx.fill();
         }
       });
 
-      const capabilities = [
-        { icon: '📊', text: '实时监测', y: centerY - 80 },
-        { icon: '⚡', text: '<1s响应', y: centerY },
-        { icon: '🎯', text: '精准控制', y: centerY + 80 }
-      ];
-
-      capabilities.forEach((cap, i) => {
-        const cx = centerX + 180;
-        const cy = cap.y;
+      // 绘制节点
+      nodes.forEach((node, i) => {
+        const pulse = 1 + Math.sin(time * 2 + i * 0.5) * 0.05;
         
-        ctx.beginPath();
-        ctx.arc(cx, cy, 25, 0, Math.PI * 2);
+        ctx.save();
+        ctx.translate(node.x, node.y);
+        ctx.scale(pulse, pulse);
+
+        // 节点背景
         ctx.fillStyle = '#1e293b';
-        ctx.fill();
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.font = '16px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(cap.icon, cx, cy + 6);
+        ctx.fillRect(-80, -25, 160, 50);
         
+        ctx.strokeStyle = node.color;
+        ctx.lineWidth = 3;
+        ctx.strokeRect(-80, -25, 160, 50);
+
+        // 节点图标
+        ctx.font = '18px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(node.icon, -70, 5);
+
+        // 节点名称
         ctx.fillStyle = '#ffffff';
-        ctx.font = '12px system-ui, sans-serif';
-        ctx.fillText(cap.text, cx, cy + 45);
+        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(node.name, -40, 0);
+
+        // 节点描述
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.fillText(node.desc, -40, 15);
+
+        ctx.restore();
       });
 
+      // 左侧：输入输出
       ctx.strokeStyle = '#475569';
-      ctx.strokeRect(centerX - 280, centerY - 100, 80, 200);
+      ctx.lineWidth = 2;
+      
+      // 输入侧
+      ctx.strokeRect(centerX - 220, centerY - 90, 40, 180);
       ctx.fillStyle = '#64748b';
       ctx.font = '12px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('泵房', centerX - 240, centerY - 110);
+      ctx.fillText('传感器', centerX - 200, centerY - 100);
+      ctx.fillText('数据', centerX - 200, centerY + 105);
 
-      const sensorPoints = [
-        { x: centerY - 60, y: -25 },
-        { x: centerY, y: 0 },
-        { x: centerY + 60, y: 25 }
-      ];
-      sensorPoints.forEach((pt, i) => {
-        const blink = Math.sin(time * 4 + i) > 0.3;
+      const sensorData = (time * 3) % 5;
+      for (let i = 0; i < 5; i++) {
+        const sy = centerY - 80 + i * 40;
+        const isActive = Math.floor(sensorData) === i;
+        
         ctx.beginPath();
-        ctx.arc(centerX - 260, pt.x, 8, 0, Math.PI * 2);
-        ctx.fillStyle = blink ? '#22c55e' : '#1e293b';
+        ctx.arc(centerX - 200, sy, 6, 0, Math.PI * 2);
+        ctx.fillStyle = isActive ? '#22c55e' : '#475569';
         ctx.fill();
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 1;
+        
+        if (isActive) {
+          ctx.beginPath();
+          ctx.moveTo(centerX - 200, sy);
+          ctx.lineTo(nodes[0].x - 80, nodes[0].y);
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+
+      // 右侧：执行侧
+      ctx.strokeRect(centerX + 180, centerY - 30, 40, 60);
+      ctx.fillStyle = '#64748b';
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.fillText('执行', centerX + 200, centerY - 40);
+      ctx.fillText('单元', centerX + 200, centerY + 45);
+
+      const actuateData = (time * 3) % 5;
+      if (actuateData > 2.5) {
+        ctx.beginPath();
+        ctx.moveTo(nodes[4].x + 80, nodes[4].y);
+        ctx.lineTo(centerX + 180, centerY);
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
         ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.beginPath();
+      ctx.arc(centerX + 200, centerY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = actuateData > 2.5 ? '#3b82f6' : '#475569';
+      ctx.fill();
+
+      // 底部特性说明
+      const features = [
+        { text: '<1s响应', color: '#22c55e' },
+        { text: '实时监测', color: '#3b82f6' },
+        { text: '精准控制', color: '#8b5cf6' }
+      ];
+
+      features.forEach((feat, i) => {
+        const fx = centerX - 100 + i * 100;
+        const fy = height - 50;
+        
+        ctx.beginPath();
+        ctx.arc(fx, fy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = feat.color;
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(feat.text, fx + 15, fy + 4);
       });
-      
+
       ctx.globalAlpha = 1;
     };
 
-    // 场景3：全感知检测与实时需求
+    // 场景3：全感知检测与硬件部署（重点优化）
     const drawScene3 = (width: number, height: number, time: number, alpha: number = 1) => {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = '#0f172a';
@@ -286,134 +329,269 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerY = height / 2;
 
       ctx.fillStyle = '#22c55e';
-      ctx.font = 'bold 20px system-ui, sans-serif';
+      ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('全感知检测网络', centerX, 50);
+      ctx.fillText('全感知检测与硬件部署方案', centerX, 35);
 
+      // ========== 左侧：建筑剖面图 ==========
+      const buildingX = centerX - 200;
+      const buildingY = centerY;
+      const floorHeight = 40;
+      const floorCount = 5;
+      
       ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(centerX - 180, centerY - 150, 360, 300);
-
-      const floorLabels = ['5楼', '4楼', '3楼', '2楼', '1楼'];
-      floorLabels.forEach((label, i) => {
-        const y = centerY - 130 + i * 55;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px system-ui, sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText(label, centerX - 165, y + 20);
-      });
-
-      const sensors = [
-        { x: centerY - 130, y: -100, type: '压力', value: '0.45 MPa' },
-        { x: centerY - 75, y: -50, type: '流量', value: '12.5 m³/h' },
-        { x: centerY - 20, y: 0, type: '压力', value: '0.42 MPa' },
-        { x: centerY + 35, y: 50, type: '流量', value: '11.8 m³/h' },
-        { x: centerY + 90, y: 100, type: '压力', value: '0.40 MPa' }
-      ];
-
-      sensors.forEach((sensor, i) => {
-        const sx = centerX - 120;
-        const sy = sensor.x;
-        const blink = Math.sin(time * 5 + i) > 0.3;
-
+      ctx.lineWidth = 3;
+      
+      // 绘制建筑轮廓
+      ctx.strokeRect(buildingX - 50, buildingY - floorHeight * floorCount / 2, 100, floorHeight * floorCount);
+      
+      // 绘制楼层
+      for (let i = 0; i < floorCount; i++) {
+        const floorY = buildingY - floorHeight * floorCount / 2 + i * floorHeight;
+        
+        // 楼板
         ctx.beginPath();
-        ctx.arc(sx, sy, 12, 0, Math.PI * 2);
-        ctx.fillStyle = blink ? '#22c55e' : '#1e293b';
-        ctx.fill();
-        ctx.strokeStyle = '#22c55e';
+        ctx.moveTo(buildingX - 50, floorY);
+        ctx.lineTo(buildingX + 50, floorY);
+        ctx.strokeStyle = '#64748b';
         ctx.lineWidth = 2;
         ctx.stroke();
+        
+        // 楼层标签
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '12px system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${floorCount - i}楼`, buildingX - 55, floorY + floorHeight / 2 + 4);
+        
+        // 管道
+        if (i < floorCount - 1) {
+          ctx.beginPath();
+          ctx.moveTo(buildingX + 30, floorY + 5);
+          ctx.lineTo(buildingX + 30, floorY + floorHeight);
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+      }
 
+      // ========== 顶楼（最不利点）压力表和4G模块 ==========
+      const topFloorY = buildingY - floorHeight * floorCount / 2;
+      
+      // 压力表
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(buildingX + 10, topFloorY + 10, 30, 25);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(buildingX + 10, topFloorY + 10, 30, 25);
+      
+      ctx.fillStyle = '#22c55e';
+      ctx.font = '10px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('P', buildingX + 25, topFloorY + 26);
+      
+      // 压力读数动画
+      const pressureValue = (0.4 + Math.sin(time * 2) * 0.02).toFixed(3);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.fillText(pressureValue + ' MPa', buildingX + 25, topFloorY - 5);
+      
+      // 4G远传模块
+      const blink = Math.sin(time * 4) > 0;
+      ctx.beginPath();
+      ctx.arc(buildingX + 25, topFloorY - 18, 8, 0, Math.PI * 2);
+      ctx.fillStyle = blink ? '#3b82f6' : '#1e293b';
+      ctx.fill();
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '9px system-ui, sans-serif';
+      ctx.fillText('4G', buildingX + 25, topFloorY - 15);
+      
+      // 标注：最不利点
+      ctx.fillStyle = '#ef4444';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('最不利点', buildingX + 25, topFloorY + 55);
+      ctx.font = '10px system-ui, sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('压力表+4G', buildingX + 25, topFloorY + 68);
+
+      // ========== 中间：云端服务器 ==========
+      const cloudX = centerX;
+      const cloudY = centerY - 60;
+      
+      // 云端图标
+      ctx.beginPath();
+      ctx.arc(cloudX - 20, cloudY, 20, 0, Math.PI * 2);
+      ctx.arc(cloudX + 20, cloudY, 20, 0, Math.PI * 2);
+      ctx.arc(cloudX, cloudY - 15, 25, 0, Math.PI * 2);
+      ctx.fillStyle = '#06b6d4';
+      ctx.fill();
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('☁️', cloudX, cloudY + 5);
+      
+      ctx.fillStyle = '#06b6d4';
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.fillText('云端平台', cloudX, cloudY + 40);
+      
+      // 数据流动画到云端
+      const dataToCloud = (time * 3) % 1;
+      const toCloudX = buildingX + 25 + (cloudX - buildingX - 25) * dataToCloud;
+      const toCloudY = topFloorY - 18 + (cloudY - topFloorY + 18) * dataToCloud;
+      
+      ctx.beginPath();
+      ctx.arc(toCloudX, toCloudY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fill();
+      
+      // 标注：传输链路1
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('4G上传', centerX - 80, centerY - 85);
+
+      // ========== 右侧：泵房边缘控制器 ==========
+      const pumpX = centerX + 180;
+      const pumpY = centerY + 20;
+      
+      // 边缘控制器盒子
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(pumpX - 40, pumpY - 30, 80, 60);
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(pumpX - 40, pumpY - 30, 80, 60);
+      
+      ctx.fillStyle = '#8b5cf6';
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('边缘', pumpX, pumpY - 10);
+      ctx.fillText('控制器', pumpX, pumpY + 8);
+      
+      // 智能盒子图标
+      const boxPulse = 1 + Math.sin(time * 3) * 0.1;
+      ctx.save();
+      ctx.translate(pumpX, pumpY + 25);
+      ctx.scale(boxPulse, boxPulse);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(-15, -10, 30, 20);
+      ctx.restore();
+      
+      // 数据流动画到边缘控制器
+      const dataToPump = (time * 3 + 0.5) % 1;
+      const toPumpX = cloudX + (pumpX - cloudX) * dataToPump;
+      const toPumpY = cloudY + (pumpY - cloudY) * dataToPump;
+      
+      ctx.beginPath();
+      ctx.arc(toPumpX, toPumpY, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#8b5cf6';
+      ctx.fill();
+      
+      // 标注：传输链路2
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('4G下载', centerX + 90, centerY - 20);
+
+      // ========== 变频泵 ==========
+      const pumpMotorY = pumpY + 80;
+      
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(pumpX - 30, pumpMotorY - 20, 60, 40);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(pumpX - 30, pumpMotorY - 20, 60, 40);
+      
+      ctx.fillStyle = '#22c55e';
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('变频泵', pumpX, pumpMotorY + 5);
+      
+      // 控制线
+      const controlSignal = (time * 4) % 1;
+      const signalY = pumpY + 30 + controlSignal * 30;
+      
+      ctx.beginPath();
+      ctx.moveTo(pumpX, pumpY + 30);
+      ctx.lineTo(pumpX, pumpMotorY - 20);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      ctx.beginPath();
+      ctx.arc(pumpX, signalY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#22c55e';
+      ctx.fill();
+
+      // ========== 工作流程说明 ==========
+      const processSteps = [
+        { step: 1, text: '压力表采集数据', x: centerX - 120, y: centerY + 130 },
+        { step: 2, text: '4G上传至云端', x: centerX, y: centerY + 130 },
+        { step: 3, text: '边缘控制器决策', x: centerX + 120, y: centerY + 130 }
+      ];
+
+      processSteps.forEach((ps, i) => {
+        ctx.beginPath();
+        ctx.arc(ps.x, ps.y, 12, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('S' + (i + 1), sx, sy + 4);
-
+        ctx.fillText(String(ps.step), ps.x, ps.y + 4);
+        
         ctx.fillStyle = '#94a3b8';
-        ctx.font = '12px system-ui, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(sensor.type + ': ' + sensor.value, sx + 20, sy + 4);
-
-        if (i > 0) {
-          ctx.beginPath();
-          ctx.moveTo(sx, sensors[i - 1].x);
-          ctx.lineTo(sx, sy);
-          ctx.strokeStyle = '#475569';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.fillText(ps.text, ps.x, ps.y + 28);
       });
 
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 3;
+      // 流程箭头
       ctx.beginPath();
-      ctx.moveTo(centerX + 80, centerY);
-      ctx.lineTo(centerX + 200, centerY - 80);
+      ctx.moveTo(centerX - 105, centerY + 130);
+      ctx.lineTo(centerX - 95, centerY + 130);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
       ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(centerX + 200, centerY - 80);
-      ctx.lineTo(centerX + 250, centerY - 50);
-      ctx.stroke();
-
-      ctx.fillRect(centerX + 200, centerY - 100, 60, 40);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('4G', centerX + 230, centerY - 75);
-
-      ctx.fillRect(centerX + 250, centerY - 70, 60, 40);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('云端', centerX + 280, centerY - 45);
-
-      const cloudData = (time * 2) % 3;
-      for (let i = 0; i < 5; i++) {
-        const dotX = centerX + 260 + i * 15;
-        const dotY = centerY - 40 + Math.sin(time * 3 + i) * 8;
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = i < cloudData ? '#3b82f6' : '#475569';
-        ctx.fill();
-      }
-
-      ctx.strokeStyle = '#22c55e';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(centerX + 280, centerY - 30);
-      ctx.lineTo(centerX + 100, centerY + 50);
-      ctx.stroke();
-
-      ctx.fillRect(centerX + 50, centerY + 40, 80, 40);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '11px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('边缘控制器', centerX + 90, centerY + 65);
-
-      ctx.strokeStyle = '#22c55e';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(centerX + 50, centerY + 60);
-      ctx.lineTo(centerX - 100, centerY + 60);
-      ctx.lineTo(centerX - 100, centerY + 120);
-      ctx.stroke();
-
-      ctx.fillRect(centerX - 140, centerY + 120, 80, 40);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('变频泵', centerX - 100, centerY + 145);
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText('采集周期: 50ms', centerX - 100, height - 30);
-      ctx.fillText('传感器数: 5个', centerX + 100, height - 30);
       
+      ctx.beginPath();
+      ctx.moveTo(centerX + 15, centerY + 130);
+      ctx.lineTo(centerX + 25, centerY + 130);
+      ctx.stroke();
+
+      // ========== 关键指标 ==========
+      const metrics = [
+        { label: '采样周期', value: '50ms' },
+        { label: '传输延迟', value: '<100ms' },
+        { label: '控制精度', value: '±0.01MPa' }
+      ];
+
+      metrics.forEach((metric, i) => {
+        const mx = centerX - 120 + i * 120;
+        const my = height - 35;
+        
+        ctx.fillStyle = '#475569';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(metric.label + ': ', mx, my);
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 12px system-ui, sans-serif';
+        ctx.fillText(metric.value, mx + 40, my);
+      });
+
       ctx.globalAlpha = 1;
     };
 
-    // 场景4：MPC智能决策
+    // 场景4：MPC vs 非MPC数据对比
     const drawScene4 = (width: number, height: number, time: number, alpha: number = 1) => {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = '#0f172a';
@@ -423,126 +601,234 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerY = height / 2;
 
       ctx.fillStyle = '#8b5cf6';
-      ctx.font = 'bold 20px system-ui, sans-serif';
+      ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('MPC智能决策与精准把控', centerX, 50);
+      ctx.fillText('MPC智能算法 vs 传统PID控制对比', centerX, 35);
 
+      // ========== 上半部分：压力响应曲线对比图 ==========
+      const chartX = centerX - 200;
+      const chartY = centerY - 60;
+      const chartWidth = 400;
+      const chartHeight = 140;
+
+      // 图表背景和边框
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(chartX, chartY, chartWidth, chartHeight);
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 2;
-      ctx.strokeRect(centerX - 200, centerY - 150, 400, 300);
+      ctx.strokeRect(chartX, chartY, chartWidth, chartHeight);
 
+      // 网格线
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 5; i++) {
+        const gridY = chartY + (chartHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(chartX, gridY);
+        ctx.lineTo(chartX + chartWidth, gridY);
+        ctx.stroke();
+      }
+
+      // 目标压力线（虚线）
+      const targetY = chartY + chartHeight * 0.3;
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 4]);
       ctx.beginPath();
-      ctx.moveTo(centerX - 150, centerY - 80);
-      for (let x = 0; x < 300; x += 3) {
-        const smoothResponse = Math.min(100, x * 0.5) + Math.sin(x * 0.05 + time * 2) * 2;
-        ctx.lineTo(centerX - 150 + x, centerY - 80 + 120 - smoothResponse);
+      ctx.moveTo(chartX, targetY);
+      ctx.lineTo(chartX + chartWidth, targetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#22c55e';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('目标压力', chartX + 5, targetY - 5);
+
+      // 传统PID响应曲线（红色，振荡大）
+      ctx.beginPath();
+      ctx.moveTo(chartX, chartY + chartHeight - 10);
+      for (let x = 0; x < chartWidth; x += 2) {
+        const pidResponse = Math.sin(x * 0.03 + time * 0.5) * 40 * Math.exp(-x * 0.008) 
+                          + Math.sin(x * 0.06) * 20 * Math.exp(-x * 0.005);
+        const pidY = chartY + chartHeight - 10 - pidResponse;
+        ctx.lineTo(chartX + x, pidY);
+      }
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // MPC响应曲线（绿色，平滑快速）
+      ctx.beginPath();
+      ctx.moveTo(chartX, chartY + chartHeight - 10);
+      for (let x = 0; x < chartWidth; x += 2) {
+        const mpcResponse = Math.min(chartHeight * 0.8, x * 0.6) 
+                          + Math.sin(x * 0.08 + time * 0.5) * 3 * Math.exp(-x * 0.02);
+        const mpcY = chartY + chartHeight - 10 - mpcResponse;
+        ctx.lineTo(chartX + x, mpcY);
       }
       ctx.strokeStyle = '#22c55e';
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      ctx.fillStyle = '#22c55e';
-      ctx.font = '14px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('MPC响应曲线', centerX, centerY - 120);
+      // 图例
+      const legendX = chartX + chartWidth - 120;
+      const legendY = chartY + 20;
 
+      // PID图例
+      ctx.beginPath();
+      ctx.moveTo(legendX, legendY);
+      ctx.lineTo(legendX + 30, legendY);
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('传统PID', legendX + 35, legendY + 4);
+
+      // MPC图例
+      ctx.beginPath();
+      ctx.moveTo(legendX, legendY + 20);
+      ctx.lineTo(legendX + 30, legendY + 20);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('MPC算法', legendX + 35, legendY + 24);
+
+      // 动态对比点
+      const compareX = chartX + ((time * 50) % chartWidth);
+      const pidCompareY = chartY + chartHeight - 10 - Math.sin(compareX * 0.03) * 40 * Math.exp(-compareX * 0.008);
+      const mpcCompareY = chartY + chartHeight - 10 - Math.min(chartHeight * 0.8, compareX * 0.6);
+
+      // PID点
+      ctx.beginPath();
+      ctx.arc(compareX, pidCompareY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ef4444';
+      ctx.fill();
+
+      // MPC点
+      ctx.beginPath();
+      ctx.arc(compareX, mpcCompareY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#22c55e';
+      ctx.fill();
+
+      // ========== 下半部分：关键指标对比表格 ==========
+      const tableY = chartY + chartHeight + 30;
+      const tableWidth = 400;
+      const rowHeight = 35;
+
+      // 表头
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(chartX, tableY, tableWidth, rowHeight);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('性能指标', chartX + 70, tableY + 22);
+      ctx.fillText('传统PID', chartX + 180, tableY + 22);
+      ctx.fillText('MPC算法', chartX + 280, tableY + 22);
+      ctx.fillText('提升', chartX + 360, tableY + 22);
+
+      // 表格边框
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(chartX, tableY, tableWidth, rowHeight * 5);
+
+      // 表格数据行
       const metrics = [
-        { name: '超调量', value: '<2%', status: 'normal' },
-        { name: '调节时间', value: '3.2s', status: 'normal' },
-        { name: '稳定误差', value: '±0.01', status: 'normal' },
-        { name: '振荡衰减', value: '95%', status: 'excellent' }
+        { name: '超调量', pid: '32%', mpc: '2%', improve: '94%' },
+        { name: '调节时间', pid: '8.5s', mpc: '3.2s', improve: '62%' },
+        { name: '稳定误差', pid: '±5%', mpc: '±0.5%', improve: '90%' },
+        { name: '振荡次数', pid: '5次', mpc: '0次', improve: '100%' }
       ];
 
       metrics.forEach((metric, i) => {
-        const mx = centerX - 150 + i * 75;
-        const my = centerY + 80;
+        const rowY = tableY + rowHeight * (i + 1);
         
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(mx - 35, my - 35, 70, 70);
-        
-        ctx.fillStyle = metric.status === 'excellent' ? '#8b5cf6' : '#22c55e';
-        ctx.font = 'bold 12px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(metric.name, mx, my - 10);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px system-ui, sans-serif';
-        ctx.fillText(metric.value, mx, my + 15);
-      });
-
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(centerX - 180, centerY - 180, 120, 30);
-      ctx.fillStyle = '#64748b';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText('预测模型', centerX - 120, centerY - 160);
-
-      const predictionData = [];
-      for (let i = 0; i < 10; i++) {
-        predictionData.push(Math.sin(time + i * 0.5) * 0.3 + 0.5);
-      }
-
-      for (let i = 0; i < predictionData.length - 1; i++) {
-        const x1 = centerX - 170 + i * 12;
-        const y1 = centerY - 120 - predictionData[i] * 80;
-        const x2 = centerX - 170 + (i + 1) * 12;
-        const y2 = centerY - 120 - predictionData[i + 1] * 80;
-        
+        // 分隔线
         ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.strokeStyle = i < 3 ? '#8b5cf6' : '#6366f1';
-        ctx.lineWidth = 2;
+        ctx.moveTo(chartX, rowY);
+        ctx.lineTo(chartX + tableWidth, rowY);
+        ctx.strokeStyle = '#334155';
         ctx.stroke();
-      }
 
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(centerX + 70, centerY - 180, 120, 30);
-      ctx.fillStyle = '#64748b';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText('优化目标', centerX + 130, centerY - 160);
-
-      const objectives = [
-        { text: '压力稳定', achieved: true },
-        { text: '能效最优', achieved: true },
-        { text: '响应快速', achieved: true }
-      ];
-
-      objectives.forEach((obj, i) => {
-        const ox = centerX + 80;
-        const oy = centerY - 120 + i * 20;
-        
-        ctx.beginPath();
-        ctx.arc(ox, oy, 6, 0, Math.PI * 2);
-        ctx.fillStyle = obj.achieved ? '#22c55e' : '#64748b';
-        ctx.fill();
-        
+        // 指标名称
         ctx.fillStyle = '#ffffff';
         ctx.font = '12px system-ui, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(obj.text, ox + 12, oy + 4);
+        ctx.textAlign = 'center';
+        ctx.fillText(metric.name, chartX + 70, rowY + 22);
+
+        // PID值
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText(metric.pid, chartX + 180, rowY + 22);
+
+        // MPC值
+        ctx.fillStyle = '#22c55e';
+        ctx.fillText(metric.mpc, chartX + 280, rowY + 22);
+
+        // 提升百分比
+        ctx.fillStyle = '#8b5cf6';
+        ctx.font = 'bold 12px system-ui, sans-serif';
+        ctx.fillText('↑' + metric.improve, chartX + 360, rowY + 22);
       });
 
-      const convergenceWave = (time * 3) % 100;
-      ctx.beginPath();
-      for (let x = 0; x < 100; x++) {
-        const waveY = Math.sin((x + convergenceWave) * 0.1) * 10 * Math.exp(-x * 0.03);
-        ctx.lineTo(centerX - 50 + x, centerY + 10 + waveY);
-      }
-      ctx.strokeStyle = '#8b5cf6';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      // ========== 侧边性能提升图 ==========
+      const perfX = chartX + tableWidth + 30;
+      const perfY = chartY;
+      const perfHeight = chartHeight + 30;
 
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText('振荡减少: 70%', centerX - 100, height - 30);
-      ctx.fillText('能效提升: 25%', centerX + 100, height - 30);
-      
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(perfX, perfY, 80, perfHeight);
+      ctx.strokeStyle = '#475569';
+      ctx.strokeRect(perfX, perfY, 80, perfHeight);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('综合', perfX + 40, perfY + 20);
+      ctx.fillText('性能', perfX + 40, perfY + 35);
+
+      // 性能提升柱状图
+      const perfs = [
+        { label: '速度', value: 70 },
+        { label: '精度', value: 85 },
+        { label: '稳定', value: 90 },
+        { label: '能效', value: 60 }
+      ];
+
+      perfs.forEach((perf, i) => {
+        const barY = perfY + 60 + i * 50;
+        const barHeight = perf.value * 0.35;
+        
+        // 背景条
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(perfX + 10, barY, 15, 40);
+        
+        // 数值条
+        const animValue = (time * 30 + i * 20) % 100;
+        const showValue = Math.min(perf.value, animValue);
+        const valueHeight = showValue * 0.35;
+        
+        ctx.fillStyle = i % 2 === 0 ? '#8b5cf6' : '#06b6d4';
+        ctx.fillRect(perfX + 10, barY + 40 - valueHeight, 15, valueHeight);
+        
+        // 标签
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px system-ui, sans-serif';
+        ctx.fillText(perf.label, perfX + 40, barY + 25);
+        
+        // 百分比
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px system-ui, sans-serif';
+        ctx.fillText(perf.value + '%', perfX + 40, barY + 40);
+      });
+
       ctx.globalAlpha = 1;
     };
 
-    // 场景5：最终效果与价值
+    // 场景5：最终效果与价值（多维度展示）
     const drawScene5 = (width: number, height: number, time: number, alpha: number = 1) => {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = '#0f172a';
@@ -552,100 +838,210 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerY = height / 2;
 
       ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 20px system-ui, sans-serif';
+      ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('最终效果与价值', centerX, 50);
+      ctx.fillText('DeepControl AIPC 最终效果与价值', centerX, 35);
 
-      const improvements = [
-        { label: '能效提升', before: '65%', after: '88%', icon: '⚡' },
-        { label: '响应时间', before: '1.5s', after: '<1s', icon: '⚡' },
-        { label: '压力稳定', before: '±15%', after: '±2%', icon: '📊' },
-        { label: '故障预测', before: '无', after: '提前预警', icon: '🎯' }
+      // ========== 顶部：核心优势卡片 ==========
+      const advantages = [
+        { icon: '⚡', label: '能效提升', value: '23%', color: '#f59e0b' },
+        { icon: '🎯', label: '压力稳定', value: '±2%', color: '#22c55e' },
+        { icon: '⏱️', label: '响应速度', value: '<1s', color: '#3b82f6' },
+        { icon: '📊', label: '预测准确', value: '95%', color: '#8b5cf6' }
       ];
 
-      improvements.forEach((imp, i) => {
-        const ix = centerX - 200 + i * 100;
-        const iy = centerY - 50;
+      advantages.forEach((adv, i) => {
+        const ax = centerX - 180 + i * 120;
+        const ay = centerY - 110;
         
-        ctx.beginPath();
-        ctx.arc(ix, iy, 35, 0, Math.PI * 2);
         ctx.fillStyle = '#1e293b';
-        ctx.fill();
-        ctx.strokeStyle = imp.icon === '⚡' ? '#f59e0b' : imp.icon === '📊' ? '#3b82f6' : '#22c55e';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        ctx.fillRect(ax - 50, ay - 30, 100, 60);
+        ctx.strokeStyle = adv.color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(ax - 50, ay - 30, 100, 60);
         
-        ctx.font = '24px system-ui, sans-serif';
+        ctx.font = '20px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(imp.icon, ix, iy + 8);
+        ctx.fillText(adv.icon, ax, ay - 8);
         
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 14px system-ui, sans-serif';
-        ctx.fillText(imp.label, ix, iy + 55);
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.fillText(adv.label, ax, ay + 10);
         
-        ctx.font = '12px system-ui, sans-serif';
+        ctx.fillStyle = adv.color;
+        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.fillText(adv.value, ax, ay + 28);
+      });
+
+      // ========== 左侧：优化前后对比表格 ==========
+      const tableX = centerX - 260;
+      const tableY = centerY - 30;
+      const tableWidth = 240;
+      const rowHeight = 30;
+
+      // 表头
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(tableX, tableY, tableWidth, rowHeight);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tableX, tableY, tableWidth, rowHeight * 6);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('指标', tableX + 40, tableY + 20);
+      ctx.fillText('优化前', tableX + 110, tableY + 20);
+      ctx.fillText('优化后', tableX + 180, tableY + 20);
+      ctx.fillText('改善', tableX + 220, tableY + 20);
+
+      // 表格数据
+      const comparisonData = [
+        { metric: '能效比', before: '65%', after: '88%', improve: '+23%' },
+        { metric: '超调量', before: '32%', after: '2%', improve: '-94%' },
+        { metric: '调节时间', before: '8.5s', after: '3.2s', improve: '-62%' },
+        { metric: '稳定误差', before: '±5%', after: '±0.5%', improve: '-90%' },
+        { metric: '能耗', before: '100kWh', after: '77kWh', improve: '-23%' }
+      ];
+
+      comparisonData.forEach((row, i) => {
+        const rowY = tableY + rowHeight * (i + 1);
+        
+        // 分隔线
+        ctx.beginPath();
+        ctx.moveTo(tableX, rowY);
+        ctx.lineTo(tableX + tableWidth, rowY);
+        ctx.strokeStyle = '#334155';
+        ctx.stroke();
+
+        // 数据
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.fillText(row.metric, tableX + 40, rowY + 20);
+        
         ctx.fillStyle = '#ef4444';
-        ctx.fillText('前: ' + imp.before, ix, iy + 75);
+        ctx.fillText(row.before, tableX + 110, rowY + 20);
         
         ctx.fillStyle = '#22c55e';
-        ctx.fillText('后: ' + imp.after, ix, iy + 92);
+        ctx.fillText(row.after, tableX + 180, rowY + 20);
         
-        const arrowProgress = (time * 2 + i * 0.2) % 1;
-        const arrowY = iy + 100 + arrowProgress * 30;
-        ctx.beginPath();
-        ctx.moveTo(ix - 10, arrowY - 5);
-        ctx.lineTo(ix, arrowY + 5);
-        ctx.lineTo(ix + 10, arrowY - 5);
         ctx.fillStyle = '#f59e0b';
-        ctx.fill();
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.fillText(row.improve, tableX + 220, rowY + 20);
       });
-
-      const highlights = [
-        '降低运行成本30%',
-        '延长设备寿命20%',
-        '提升用户满意度',
-        '减少维护频次50%'
-      ];
-
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(centerX - 180, centerY + 100, 360, 80);
-
-      highlights.forEach((highlight, i) => {
-        const hx = centerX - 160 + (i % 2) * 170;
-        const hy = centerY + 120 + Math.floor(i / 2) * 25;
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '12px system-ui, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('✓ ' + highlight, hx, hy);
-      });
-
-      const pulse = 1 + Math.sin(time * 3) * 0.05;
-      ctx.save();
-      ctx.translate(centerX, centerY - 120);
-      ctx.scale(pulse, pulse);
-      
-      ctx.beginPath();
-      ctx.arc(0, 0, 20, 0, Math.PI * 2);
-      ctx.fillStyle = '#22c55e';
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('✓', 0, 5);
-      
-      ctx.restore();
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '12px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('DeepControl AIPC - 智能二次供水优化解决方案', centerX, height - 30);
+      ctx.fillText('优化前后对比', tableX + tableWidth / 2, tableY - 10);
+
+      // ========== 右侧：柱状图展示 ==========
+      const chartX = centerX + 20;
+      const chartY = centerY - 30;
+      const chartWidth = 240;
+      const chartHeight = 180;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(chartX, chartY, chartWidth, chartHeight);
+      ctx.strokeStyle = '#475569';
+      ctx.strokeRect(chartX, chartY, chartWidth, chartHeight);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('性能提升分布', chartX + chartWidth / 2, chartY + 20);
+
+      // 柱状图数据
+      const barData = [
+        { label: '能效', value: 23, color: '#f59e0b' },
+        { label: '稳定', value: 30, color: '#22c55e' },
+        { label: '响应', value: 40, color: '#3b82f6' },
+        { label: '精度', value: 35, color: '#8b5cf6' },
+        { label: '寿命', value: 20, color: '#06b6d4' }
+      ];
+
+      const barWidth = 30;
+      const barGap = 15;
+      const startX = chartX + 25;
+
+      barData.forEach((bar, i) => {
+        const bx = startX + i * (barWidth + barGap);
+        const barHeight = bar.value * 3.5;
+        const animValue = (time * 50 + i * 30) % 100;
+        const showHeight = Math.min(barHeight, (animValue / 100) * barHeight);
+        
+        // 柱子背景
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(bx, chartY + chartHeight - 30, barWidth, barHeight);
+        
+        // 数值柱
+        ctx.fillStyle = bar.color;
+        ctx.fillRect(bx, chartY + chartHeight - 30 - showHeight, barWidth, showHeight);
+        
+        // 标签
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(bar.label, bx + barWidth / 2, chartY + chartHeight - 10);
+        
+        // 百分比
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px system-ui, sans-serif';
+        ctx.fillText(bar.value + '%', bx + barWidth / 2, chartY + chartHeight - 30 - showHeight - 5);
+      });
+
+      // ========== 底部：综合效益总结 ==========
+      const summaryY = centerY + 120;
       
+      const benefits = [
+        { icon: '💰', text: '年节约电费约2.3万元', color: '#f59e0b' },
+        { icon: '🔧', text: '维护频次减少50%', color: '#22c55e' },
+        { icon: '⏰', text: '设备寿命延长20%', color: '#3b82f6' },
+        { icon: '😊', text: '用户满意度提升', color: '#8b5cf6' }
+      ];
+
+      benefits.forEach((benefit, i) => {
+        const bx = centerX - 240 + i * 160;
+        
+        ctx.beginPath();
+        ctx.arc(bx, summaryY, 15, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+        ctx.strokeStyle = benefit.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.font = '16px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(benefit.icon, bx, summaryY + 6);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.fillText(benefit.text, bx, summaryY + 30);
+      });
+
+      // 总体评分
+      const scoreY = centerY + 170;
+      const scoreValue = 9.2;
+      const scoreMax = 10;
+      const scoreBarWidth = 200;
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('综合评分', centerX - 100, scoreY);
+      
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(centerX - 100, scoreY + 10, scoreBarWidth, 15);
+      
+      const scoreBarFilled = (scoreValue / scoreMax) * scoreBarWidth;
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(centerX - 100, scoreY + 10, scoreBarFilled, 15);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(scoreValue + '/' + scoreMax, centerX + 120, scoreY + 22);
+
       ctx.globalAlpha = 1;
     };
 
