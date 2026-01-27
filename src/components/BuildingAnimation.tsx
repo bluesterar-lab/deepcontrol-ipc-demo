@@ -1102,29 +1102,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillText(bar.value + '%', bx + barWidth / 2, chartY + chartHeight - 30 - showHeight - 5);
       });
 
-      // 总体评分
-      const scoreY = centerY + 170;
-      const scoreValue = 9.2;
-      const scoreMax = 10;
-      const scoreBarWidth = 200;
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('综合评分', centerX - 100, scoreY);
-      
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(centerX - 100, scoreY + 10, scoreBarWidth, 15);
-      
-      const scoreBarFilled = (scoreValue / scoreMax) * scoreBarWidth;
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(centerX - 100, scoreY + 10, scoreBarFilled, 15);
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(scoreValue + '/' + scoreMax, centerX + 120, scoreY + 22);
-
       ctx.globalAlpha = 1;
     };
 
