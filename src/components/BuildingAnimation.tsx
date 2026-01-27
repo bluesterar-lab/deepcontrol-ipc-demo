@@ -58,7 +58,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillRect(0, 0, width, height);
 
       const centerX = width / 2;
-      const centerY = height / 2;
+      const centerY = height / 2 - 40;
 
       ctx.fillStyle = '#ef4444';
       ctx.font = 'bold 18px system-ui, sans-serif';
@@ -1102,35 +1102,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillText(bar.value + '%', bx + barWidth / 2, chartY + chartHeight - 30 - showHeight - 5);
       });
 
-      // ========== 底部：综合效益总结 ==========
-      const summaryY = centerY + 120;
-      
-      const benefits = [
-        { icon: '💰', text: '年节约电费约2.3万元', color: '#f59e0b' },
-        { icon: '🔧', text: '维护频次减少50%', color: '#22c55e' },
-        { icon: '⏰', text: '设备寿命延长20%', color: '#3b82f6' },
-        { icon: '😊', text: '用户满意度提升', color: '#8b5cf6' }
-      ];
 
-      benefits.forEach((benefit, i) => {
-        const bx = centerX - 240 + i * 160;
-        
-        ctx.beginPath();
-        ctx.arc(bx, summaryY, 15, 0, Math.PI * 2);
-        ctx.fillStyle = '#1e293b';
-        ctx.fill();
-        ctx.strokeStyle = benefit.color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        ctx.font = '16px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(benefit.icon, bx, summaryY + 6);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '11px system-ui, sans-serif';
-        ctx.fillText(benefit.text, bx, summaryY + 30);
-      });
 
       // 总体评分
       const scoreY = centerY + 170;
@@ -1411,9 +1383,9 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         case 1: drawScene1(width, height, time, alpha); break;
         case 2: drawScene2(width, height, time, alpha); break;
         case 3: drawScene3(width, height, time, alpha); break;
-        case 4: drawScene4(width, height, time, alpha); break;
-        case 5: drawScene5(width, height, time, alpha); break;
-        case 6: drawScene6(width, height, time, alpha); break;
+        case 4: drawScene6(width, height, time, alpha); break;
+        case 5: drawScene4(width, height, time, alpha); break;
+        case 6: drawScene5(width, height, time, alpha); break;
       }
     };
 
