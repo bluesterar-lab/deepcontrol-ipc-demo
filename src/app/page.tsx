@@ -65,7 +65,8 @@ export default function Home() {
       timerRef.current = setInterval(() => {
         setProgress((prev) => {
           const nextProgress = prev + interval / 1000;
-          const currentDuration = SCENES[currentScene - 1].duration;
+          const safeSceneIndex = Math.max(1, Math.min(currentScene, SCENES.length));
+          const currentDuration = SCENES[safeSceneIndex - 1].duration;
           
           if (nextProgress >= currentDuration) {
             // 切换到下一个场景
@@ -119,7 +120,11 @@ export default function Home() {
 
   const currentSceneData = SCENES[currentScene - 1];
   const totalDuration = SCENES.reduce((sum, s) => sum + s.duration, 0);
-  const currentTime = SCENES.slice(0, currentScene - 1).reduce((sum, s) => sum + s.duration, 0) + progress;
+  const currentTime = SCENES.slice(0, Math.max(0, currentScene - 1)).reduce((sum, s) => sum + s.duration, 0) + progress;
+
+  // 确保 currentScene 在有效范围内
+  const safeCurrentScene = Math.max(1, Math.min(currentScene, SCENES.length));
+  const safeCurrentSceneData = SCENES[safeCurrentScene - 1] || SCENES[0];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -175,7 +180,7 @@ export default function Home() {
                 {/* 场景标题浮层 */}
                 <div className="absolute top-4 left-4 right-4">
                   <h2 className="text-lg font-semibold text-white/90 bg-slate-900/60 backdrop-blur-sm inline-block px-4 py-2 rounded-lg">
-                    {currentSceneData.title}
+                    {safeCurrentSceneData.title}
                   </h2>
                 </div>
 
@@ -227,10 +232,10 @@ export default function Home() {
                 <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 animate-pulse" />
                 <div className="flex-1 space-y-2">
                   <p className="text-lg text-slate-100 leading-relaxed">
-                    {currentSceneData.subtitle}
+                    {safeCurrentSceneData.subtitle}
                   </p>
                   <p className="text-sm text-slate-400">
-                    {currentSceneData.description}
+                    {safeCurrentSceneData.description}
                   </p>
                 </div>
               </div>
