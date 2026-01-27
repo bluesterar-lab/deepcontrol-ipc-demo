@@ -573,138 +573,229 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
 
   // 第三幕
   const drawScene3 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number, scale: number) => {
-    const building = drawIsoBuilding(ctx, cx - 75 * scale, cy, time, true);
+    // 绘制建筑
+    const building = drawIsoBuilding(ctx, cx - 100 * scale, cy + 50 * scale, time, false);
     
-    const startX = cx - 375 * scale;
-    const startY = cy + 150 * scale;
+    const startX = cx - 400 * scale;
+    const startY = cy + 200 * scale;
     const buildingWidth = 90 * scale;
     const buildingDepth = 90 * scale;
     const floors = 30;
     const floorHeight = 12 * scale;
     
-    ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 1.5 * scale;
+    // 楼顶压力传感器
+    const roofY = cy - 200 * scale;
+    const roofX = cx - 100 * scale;
     
-    for (let corner of [[0, 0], [buildingWidth, 0], [0, buildingDepth], [buildingWidth, buildingDepth]]) {
-      const bottom = isoTransform(startX + corner[0], startY + corner[1], 0);
-      const top = isoTransform(startX + corner[0], startY + corner[1], floors * floorHeight);
-      ctx.beginPath();
-      ctx.moveTo(bottom.x, bottom.y);
-      ctx.lineTo(top.x, top.y);
-      ctx.stroke();
+    // 绘制楼顶传感器图标
+    ctx.fillStyle = colors.warning;
+    ctx.beginPath();
+    ctx.arc(roofX, roofY, 15 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = colors.brightWhite;
+    ctx.font = `bold ${12 * scale}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('P', roofX, roofY + 4 * scale);
+    
+    // 传感器标签
+    if (time > 1) {
+      ctx.fillStyle = colors.neonBlue;
+      ctx.font = `${14 * scale}px monospace`;
+      ctx.fillText('0.45 MPa', roofX, roofY - 25 * scale);
     }
     
-    const pipeX = cx - 75 * scale;
-    ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 6 * scale;
-    ctx.setLineDash([3 * scale, 3 * scale]);
-    ctx.beginPath();
-    ctx.moveTo(pipeX, cy + 450 * scale);
-    ctx.lineTo(pipeX, cy - 270 * scale);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    
-    const sensorPositions = [
-      {x: pipeX, y: cy + 300 * scale},
-      {x: pipeX, y: cy + 150 * scale},
-      {x: pipeX, y: cy},
-      {x: pipeX, y: cy - 150 * scale}
-    ];
-    
-    sensorPositions.forEach((pos, index) => {
-      const pulsePhase = ((time * 2 + index * 0.5) % 1);
+    // 4G传输箭头（楼顶到云端）
+    if (time > 2) {
+      const cloudX = cx + 80 * scale;
+      const cloudY = cy - 250 * scale;
       
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 20 * scale + pulsePhase * 20 * scale, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(0, 240, 255, ${1 - pulsePhase})`;
-      ctx.lineWidth = 3 * scale;
-      ctx.stroke();
+      // 绘制4G图标
+      ctx.fillStyle = colors.cyan;
+      ctx.font = `bold ${16 * scale}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('4G', (roofX + cloudX) / 2, roofY - 60 * scale);
       
-      ctx.fillStyle = colors.neonBlue;
+      // 上传数据流（楼顶到云端）
+      const uploadPhase = (time * 2) % 1;
+      const uploadY = roofY - 80 * scale - uploadPhase * 120 * scale;
+      
+      ctx.fillStyle = colors.cyan;
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 8 * scale, 0, Math.PI * 2);
+      ctx.arc((roofX + cloudX) / 2, uploadY, 5 * scale, 0, Math.PI * 2);
       ctx.fill();
       
-      if (time > 2) {
-        const pulseX = pos.x + ((time * 150 * scale + index * 45 * scale) % 150 * scale);
-        const pulseY = pos.y;
+      // 绘制云端图标
+      drawCloud(ctx, cloudX, cloudY, colors.cyan, scale);
+      ctx.fillStyle = colors.cyan;
+      ctx.font = `bold ${14 * scale}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('云端', cloudX, cloudY + 40 * scale);
+      
+      // 下行数据流（云端到泵房）
+      if (time > 4) {
+        const pumpRoomX = cx - 100 * scale;
+        const pumpRoomY = cy + 250 * scale;
         
-        ctx.fillStyle = colors.neonBlue;
+        const downloadPhase = (time * 2) % 1;
+        const downloadX = cloudX - (cloudX - pumpRoomX) * downloadPhase;
+        const downloadY = cloudY + (pumpRoomY - cloudY) * downloadPhase;
+        
+        ctx.fillStyle = colors.success;
         ctx.beginPath();
-        ctx.arc(pulseX, pulseY, 5 * scale, 0, Math.PI * 2);
+        ctx.arc(downloadX, downloadY, 5 * scale, 0, Math.PI * 2);
         ctx.fill();
         
-        ctx.strokeStyle = colors.neonBlueDim;
-        ctx.lineWidth = 1.5 * scale;
+        // 绘制泵房边缘控制器（盒子形式）
+        const controllerX = pumpRoomX;
+        const controllerY = pumpRoomY;
+        const controllerWidth = 80 * scale;
+        const controllerHeight = 60 * scale;
+        
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(controllerX - controllerWidth / 2, controllerY - controllerHeight / 2, 
+                    controllerWidth, controllerHeight);
+        ctx.strokeStyle = colors.success;
+        ctx.lineWidth = 3 * scale;
+        ctx.strokeRect(controllerX - controllerWidth / 2, controllerY - controllerHeight / 2, 
+                      controllerWidth, controllerHeight);
+        
+        ctx.fillStyle = colors.success;
+        ctx.font = `bold ${12 * scale}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('边缘', controllerX, controllerY - 5 * scale);
+        ctx.fillText('控制器', controllerX, controllerY + 12 * scale);
+        
+        // 控制信号到水泵
+        const pumpX = controllerX + 100 * scale;
+        const pumpY = controllerY;
+        
+        ctx.strokeStyle = colors.success;
+        ctx.lineWidth = 4 * scale;
         ctx.beginPath();
-        ctx.moveTo(pos.x + 8 * scale, pos.y);
-        ctx.lineTo(pulseX, pulseY);
+        ctx.moveTo(controllerX + controllerWidth / 2, controllerY);
+        ctx.lineTo(pumpX - 40 * scale, pumpY);
         ctx.stroke();
+        
+        // 水泵
+        const pumpRadius = 30 * scale;
+        const pumpGradient = ctx.createRadialGradient(pumpX, pumpY, 0, pumpX, pumpY, pumpRadius);
+        pumpGradient.addColorStop(0, '#ff6666');
+        pumpGradient.addColorStop(0.5, colors.warning);
+        pumpGradient.addColorStop(1, '#660000');
+        
+        ctx.fillStyle = pumpGradient;
+        ctx.beginPath();
+        ctx.arc(pumpX, pumpY, pumpRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.save();
+        ctx.translate(pumpX, pumpY);
+        ctx.rotate(time * 8);
+        ctx.strokeStyle = colors.brightWhite;
+        ctx.lineWidth = 3 * scale;
+        for (let i = 0; i < 4; i++) {
+          ctx.rotate(Math.PI / 2);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(pumpRadius * 0.7, 0);
+          ctx.stroke();
+        }
+        ctx.restore();
+        
+        // 压力控制对比
+        if (time > 6) {
+          const compareX = cx + 200 * scale;
+          const compareY = cy + 100 * scale;
+          
+          // 原来的方式
+          ctx.fillStyle = colors.warning;
+          ctx.font = `bold ${14 * scale}px sans-serif`;
+          ctx.textAlign = 'left';
+          ctx.fillText('原来的控制方式:', compareX, compareY - 80 * scale);
+          ctx.fillStyle = colors.neonBlueDim;
+          ctx.font = `${12 * scale}px monospace`;
+          ctx.fillText('泵房压力 = 0.5 MPa (恒定)', compareX, compareY - 60 * scale);
+          
+          ctx.strokeStyle = colors.warning;
+          ctx.lineWidth = 2 * scale;
+          ctx.setLineDash([5 * scale, 5 * scale]);
+          ctx.beginPath();
+          ctx.moveTo(pumpX - 20 * scale, pumpY - 40 * scale);
+          ctx.lineTo(compareX - 20 * scale, compareY - 50 * scale);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          
+          // 现在的方式
+          if (time > 8) {
+            ctx.fillStyle = colors.success;
+            ctx.font = `bold ${14 * scale}px sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.fillText('现在的控制方式:', compareX, compareY);
+            ctx.fillStyle = colors.neonBlueDim;
+            ctx.font = `${12 * scale}px monospace`;
+            ctx.fillText('楼顶压力 = 0.45 MPa (目标)', compareX, compareY + 20 * scale);
+            
+            ctx.strokeStyle = colors.success;
+            ctx.lineWidth = 2 * scale;
+            ctx.setLineDash([5 * scale, 5 * scale]);
+            ctx.beginPath();
+            ctx.moveTo(roofX + 20 * scale, roofY - 20 * scale);
+            ctx.lineTo(compareX - 20 * scale, compareY + 30 * scale);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // 能效提升
+            if (time > 10) {
+              ctx.fillStyle = colors.neonBlue;
+              ctx.font = `bold ${16 * scale}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.fillText('能效提升 45%', compareX, compareY + 80 * scale);
+            }
+          }
+        }
+        
+        // 数据流向箭头
+        const arrowSize = 10 * scale;
+        // 楼顶 → 4G
+        drawArrow(ctx, roofX, roofY - 40 * scale, roofX, roofY - 100 * scale, colors.cyan, arrowSize);
+        // 4G → 云端
+        drawArrow(ctx, roofX, roofY - 120 * scale, cloudX - 50 * scale, cloudY, colors.cyan, arrowSize);
+        // 云端 → 泵房
+        drawArrow(ctx, cloudX + 50 * scale, cloudY + 30 * scale, controllerX, controllerY, colors.success, arrowSize);
       }
-    });
-    
-    const aipcX = cx + 150 * scale;
-    const aipcY = cy;
-    
-    const aipcGlow = ctx.createRadialGradient(aipcX, aipcY, 0, aipcX, aipcY, 75 * scale);
-    aipcGlow.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
-    aipcGlow.addColorStop(1, 'rgba(0, 240, 255, 0)');
-    ctx.fillStyle = aipcGlow;
-    ctx.beginPath();
-    ctx.arc(aipcX, aipcY, 75 * scale, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(aipcX - 45 * scale, aipcY - 35 * scale, 90 * scale, 70 * scale);
-    ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 3 * scale;
-    ctx.strokeRect(aipcX - 45 * scale, aipcY - 35 * scale, 90 * scale, 70 * scale);
-    
-    ctx.fillStyle = colors.neonBlue;
-    ctx.font = `bold ${18 * scale}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('AIPC', aipcX, aipcY + 8 * scale);
-    
-    if (time > 5) {
-      const dashboardX = cx + 270 * scale;
-      const dashboardY = cy - 120 * scale;
-      const dashboardWidth = 210 * scale;
-      const dashboardHeight = 240 * scale;
-      
-      ctx.fillStyle = 'rgba(10, 22, 40, 0.9)';
-      ctx.fillRect(dashboardX, dashboardY, dashboardWidth, dashboardHeight);
-      ctx.strokeStyle = colors.neonBlue;
-      ctx.lineWidth = 1.5 * scale;
-      ctx.strokeRect(dashboardX, dashboardY, dashboardWidth, dashboardHeight);
-      
-      const dataItems = [
-        {label: 'Pressure', unit: 'MPa', base: 0.8, vary: 0.1},
-        {label: 'Vibration', unit: 'Hz', base: 120, vary: 20},
-        {label: 'Power', unit: 'kW', base: 4.2, vary: 0.5},
-        {label: 'Flow', unit: 'L/min', base: 150, vary: 30}
-      ];
-      
-      dataItems.forEach((item, index) => {
-        const itemY = dashboardY + 35 * scale + index * 50 * scale;
-        const value = item.base + Math.sin(time * 2 + index) * item.vary;
-        
-        ctx.fillStyle = colors.neonBlue;
-        ctx.font = `${14 * scale}px monospace`;
-        ctx.textAlign = 'left';
-        ctx.fillText(item.label, dashboardX + 15 * scale, itemY);
-        
-        ctx.fillStyle = colors.brightWhite;
-        ctx.font = `bold ${18 * scale}px monospace`;
-        ctx.textAlign = 'right';
-        ctx.fillText(`${value.toFixed(2)} ${item.unit}`, dashboardX + dashboardWidth - 15 * scale, itemY);
-        
-        const barWidth = (value / (item.base + item.vary)) * (dashboardWidth - 30 * scale);
-        ctx.fillStyle = colors.neonBlueDim;
-        ctx.fillRect(dashboardX + 15 * scale, itemY + 8 * scale, barWidth, 5 * scale);
-      });
     }
     
-    drawTechIndicator(ctx, cx - 375 * scale, cy - 300 * scale, '采样频率', '100Hz', time);
+    drawTechIndicator(ctx, cx - 300 * scale, cy - 250 * scale, '采样频率', '100Hz', time);
+  };
+  
+  // 绘制箭头
+  const drawArrow = (ctx: CanvasRenderingContext2D, fromX: number, fromY: number, 
+                     toX: number, toY: number, color: string, size: number) => {
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    const distance = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+    
+    // 线条
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(fromX + Math.cos(angle) * (distance - size), fromY + Math.sin(angle) * (distance - size));
+    ctx.stroke();
+    
+    // 箭头
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(
+      toX - Math.cos(angle - Math.PI / 6) * size,
+      toY - Math.sin(angle - Math.PI / 6) * size
+    );
+    ctx.lineTo(
+      toX - Math.cos(angle + Math.PI / 6) * size,
+      toY - Math.sin(angle + Math.PI / 6) * size
+    );
+    ctx.closePath();
+    ctx.fill();
   };
 
   // 第四幕
