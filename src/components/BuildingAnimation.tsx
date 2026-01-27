@@ -1411,8 +1411,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         case 1: drawScene1(width, height, time, alpha); break;
         case 2: drawScene2(width, height, time, alpha); break;
         case 3: drawScene3(width, height, time, alpha); break;
-        case 4: drawScene4(width, height, time, alpha); break;
-        case 5: drawScene6(width, height, time, alpha); break;
+        case 4: drawScene6(width, height, time, alpha); break;
+        case 5: drawScene4(width, height, time, alpha); break;
         case 6: drawScene5(width, height, time, alpha); break;
       }
     };
