@@ -101,13 +101,11 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillStyle = i <= 1 ? '#ef4444' : i === 2 ? '#f97316' : '#eab308';
         ctx.fillRect(centerX + 180, y + 10, barWidth, 35);
         
-        // 压力值标签
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 14px system-ui, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(`${i + 1}楼`, centerX + 180 + barWidth + 8, y + 32);
         
-        // 状态标签
         ctx.font = '11px system-ui, sans-serif';
         const status = i <= 1 ? '超压' : i === 2 ? '不足' : '严重不足';
         ctx.fillStyle = i <= 1 ? '#ef4444' : i === 2 ? '#f97316' : '#eab308';
@@ -152,13 +150,11 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerX = width / 2;
       const centerY = height / 2;
 
-      // 标题
       ctx.fillStyle = '#3b82f6';
       ctx.font = 'bold 20px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('DeepControl AIPC 系统架构', centerX, 50);
 
-      // 五层架构
       const layers = [
         { name: '应用层', desc: '监控与控制', color: '#3b82f6', y: centerY - 140 },
         { name: '算法层', desc: 'MPC优化算法', color: '#0ea5e9', y: centerY - 70 },
@@ -174,44 +170,24 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.translate(centerX, layer.y);
         ctx.scale(pulse, pulse);
 
-        // 层框
         ctx.fillStyle = layer.color;
         ctx.fillRect(-120, -30, 240, 60);
         
-        // 边框
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.strokeRect(-120, -30, 240, 60);
 
-        // 层名称
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(layer.name, 0, -5);
 
-        // 层描述
         ctx.font = '12px system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.fillText(layer.desc, 0, 15);
 
-        // 数据流指示器
-        if (index > 0) {
-          const dataFlow = (time * 3) % 1;
-          const flowY = -30 - dataFlow * 40;
-          ctx.beginPath();
-          ctx.arc(-60, flowY, 4, 0, Math.PI * 2);
-          ctx.fillStyle = '#fbbf24';
-          ctx.fill();
-          
-          ctx.beginPath();
-          ctx.arc(60, flowY, 4, 0, Math.PI * 2);
-          ctx.fillStyle = '#fbbf24';
-          ctx.fill();
-        }
-
         ctx.restore();
 
-        // 连接线
         if (index < layers.length - 1) {
           ctx.beginPath();
           ctx.moveTo(centerX, layer.y + 30);
@@ -220,7 +196,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          // 箭头
           ctx.beginPath();
           ctx.moveTo(centerX - 10, layers[index + 1].y - 35);
           ctx.lineTo(centerX, layers[index + 1].y - 28);
@@ -229,7 +204,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          // 数据流动画
           const dataPos = (time * 2 + index * 0.3) % 1;
           const dataY = layer.y + 30 + dataPos * (layers[index + 1].y - layer.y - 60);
           ctx.beginPath();
@@ -243,7 +217,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         }
       });
 
-      // 侧面能力标注
       const capabilities = [
         { icon: '📊', text: '实时监测', y: centerY - 80 },
         { icon: '⚡', text: '<1s响应', y: centerY },
@@ -271,7 +244,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillText(cap.text, cx, cy + 45);
       });
 
-      // 传感器分布示意
       ctx.strokeStyle = '#475569';
       ctx.strokeRect(centerX - 280, centerY - 100, 80, 200);
       ctx.fillStyle = '#64748b';
@@ -279,7 +251,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.textAlign = 'center';
       ctx.fillText('泵房', centerX - 240, centerY - 110);
 
-      // 传感器点
       const sensorPoints = [
         { x: centerY - 60, y: -25 },
         { x: centerY, y: 0 },
@@ -304,11 +275,9 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
 
       const t = Date.now() * 0.001;
 
-      // 底座
       ctx.fillStyle = '#475569';
       ctx.fillRect(-15, 0, 30, 20);
 
-      // 压力表
       ctx.beginPath();
       ctx.arc(0, -10, 25, 0, Math.PI * 2);
       ctx.fillStyle = '#e2e8f0';
@@ -317,7 +286,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // 刻度
       for (let i = 0; i < 12; i++) {
         const angle = (Math.PI * 0.75) + (i * Math.PI * 0.5 / 11);
         ctx.beginPath();
@@ -328,7 +296,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.stroke();
       }
 
-      // 指针
       const needleAngle = (Math.PI * 0.75) + Math.sin(t * 2) * Math.PI * 0.4;
       ctx.beginPath();
       ctx.moveTo(0, -10);
@@ -588,7 +555,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       drawEdgeController(cx - 60, cy + 110);
       drawPump(cx, cy + 110);
 
-      // 虚线连接
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
       ctx.moveTo(cx - 40, cy - 160);
@@ -603,7 +569,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 实时数据显示
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px system-ui, sans-serif';
       ctx.textAlign = 'left';
@@ -634,7 +599,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillText(item.value, cx - 100, dy + 4);
       });
 
-      // 底部流程
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 16px system-ui, sans-serif';
       ctx.textAlign = 'center';
@@ -649,13 +613,11 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerX = width / 2;
       const centerY = height / 2;
 
-      // 标题
       ctx.fillStyle = '#10b981';
       ctx.font = 'bold 20px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('MPC 模型预测控制', centerX, 50);
 
-      // 预测窗口
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 2;
       ctx.strokeRect(centerX - 180, centerY - 120, 360, 150);
@@ -664,7 +626,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.font = '14px system-ui, sans-serif';
       ctx.fillText('预测窗口 (未来N步)', centerX, centerY - 130);
 
-      // 时间网格
       ctx.strokeStyle = 'rgba(71, 85, 105, 0.3)';
       ctx.lineWidth = 1;
       for (let i = 0; i < 6; i++) {
@@ -680,7 +641,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillText(`t+${i}`, tx, centerY + 45);
       }
 
-      // 当前时间线（红色移动）
       const currentPos = (time * 0.5) % 240 - 120;
       ctx.beginPath();
       ctx.moveTo(centerX + currentPos, centerY - 120);
@@ -693,7 +653,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.font = 'bold 12px system-ui, sans-serif';
       ctx.fillText('当前', centerX + currentPos, centerY - 135);
 
-      // 原始压力曲线（红色虚线）
       ctx.beginPath();
       ctx.setLineDash([5, 5]);
       ctx.moveTo(centerX - 120, centerY);
@@ -706,7 +665,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // MPC优化后曲线（绿色实线）
       ctx.beginPath();
       ctx.setLineDash([]);
       ctx.moveTo(centerX - 120, centerY);
@@ -719,7 +677,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // 图例
       ctx.fillStyle = '#ffffff';
       ctx.font = '12px system-ui, sans-serif';
       ctx.textAlign = 'left';
@@ -742,7 +699,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.stroke();
       ctx.fillText('MPC优化', centerX - 190, centerY - 151);
 
-      // 控制变量圆圈
       const controlVars = [
         { name: '压力', unit: 'MPa', color: '#ef4444', base: 0.35 },
         { name: '流量', unit: 'm³/h', color: '#3b82f6', base: 12 },
@@ -773,7 +729,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.font = 'bold 12px system-ui, sans-serif';
         ctx.fillText(`${displayValue} ${v.unit}`, vx, vy + 12);
 
-        // 优化指示环
         const optPulse = Math.sin(time * 4 + i) * 5;
         ctx.beginPath();
         ctx.arc(vx, vy, 38 + optPulse, 0, Math.PI * 2);
@@ -782,7 +737,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.stroke();
       });
 
-      // 优化过程标注
       ctx.fillStyle = '#10b981';
       ctx.font = 'bold 14px system-ui, sans-serif';
       ctx.textAlign = 'center';
@@ -797,13 +751,11 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerX = width / 2;
       const centerY = height / 2;
 
-      // 标题
       ctx.fillStyle = '#8b5cf6';
       ctx.font = 'bold 20px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('最终效果与价值', centerX, 50);
 
-      // 建筑
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 2;
       ctx.strokeRect(centerX - 80, centerY - 140, 160, 220);
@@ -815,7 +767,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.stroke();
       }
 
-      // 改进前对比（左侧）
       ctx.fillStyle = '#64748b';
       ctx.font = 'bold 12px system-ui, sans-serif';
       ctx.textAlign = 'center';
@@ -833,7 +784,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillText(`${i + 1}楼`, centerX - 250, y + 20);
       }
 
-      // 改进后对比（右侧）
       ctx.fillStyle = '#64748b';
       ctx.fillText('改进后', centerX + 180, centerY - 150);
 
@@ -848,7 +798,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillText(`${i + 1}楼`, centerX + 180 + postHeight, y + 20);
       }
 
-      // 箭头对比
       const arrowOffset = Math.sin(time * 2) * 10;
       ctx.beginPath();
       ctx.moveTo(centerX - 140, centerY);
@@ -866,7 +815,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillStyle = 'rgba(34, 197, 94, 0.3)';
       ctx.fill();
 
-      // 关键指标卡片
       const metrics = [
         { label: '能耗降低', value: '45%', color: '#22c55e', icon: '⚡' },
         { label: '效率提升', value: '60%', color: '#3b82f6', icon: '📈' },
@@ -878,35 +826,29 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         const mx = centerX - 180 + i * 100;
         const my = centerY + 100;
 
-        // 卡片背景
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.roundRect(mx - 40, my - 35, 80, 70, 8);
         ctx.fill();
 
-        // 卡片边框
         ctx.strokeStyle = m.color;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.roundRect(mx - 40, my - 35, 80, 70, 8);
         ctx.stroke();
 
-        // 图标
         ctx.font = '16px system-ui, sans-serif';
         ctx.fillText(m.icon, mx, my - 18);
 
-        // 数值
         ctx.fillStyle = m.color;
         ctx.font = 'bold 18px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(m.value, mx, my + 8);
 
-        // 标签
         ctx.fillStyle = '#94a3b8';
         ctx.font = '10px system-ui, sans-serif';
         ctx.fillText(m.label, mx, my + 25);
 
-        // 闪烁效果
         const blink = Math.sin(time * 3 + i) > 0.5;
         if (blink) {
           ctx.beginPath();
@@ -916,13 +858,11 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         }
       });
 
-      // 成功标识
       ctx.fillStyle = '#22c55e';
       ctx.font = 'bold 16px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('✓ 优化目标达成', centerX, height - 50);
+      ctx.fillText('✓ 优化目标达成', centerX, height - 80);
 
-      // 系统状态指示
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(centerX - 100, centerY - 180, 200, 30);
       ctx.strokeStyle = '#22c55e';
@@ -933,11 +873,10 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.font = 'bold 14px system-ui, sans-serif';
       ctx.fillText('系统运行状态：正常', centerX, centerY - 158);
 
-      // 运行时间计数
       const runHours = Math.floor(8760 + Math.sin(time) * 100);
       ctx.fillStyle = '#64748b';
       ctx.font = '12px system-ui, sans-serif';
-      ctx.fillText(`7×24小时稳定运行 | 累计 ${runHours} 小时`, centerX, height - 30);
+      ctx.fillText(`7×24小时稳定运行 | 累计 ${runHours} 小时`, centerX, height - 50);
     };
 
     const animate = (timestamp: number) => {
@@ -985,11 +924,14 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   }, [scene]);
 
   return (
-    <div className="w-full h-full relative bg-slate-900">
+    <div className="w-full h-full relative bg-slate-900" style={{ zIndex: 0 }}>
       <canvas
         ref={canvasRef}
         className="w-full h-full absolute inset-0"
-        style={{ pointerEvents: 'none' }}
+        style={{ 
+          pointerEvents: 'none',
+          zIndex: 0
+        }}
       />
     </div>
   );
