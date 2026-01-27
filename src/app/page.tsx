@@ -45,17 +45,17 @@ const SCENES: Scene[] = [
   },
   {
     id: 5,
-    title: '第五幕：MPC 智能决策与精准把控',
-    duration: 15,
-    subtitle: '基于MPC模型预测控制，实现多变量协调，优于传统PID。实时优化水泵运行组合，精准把控流量。',
-    description: '提前预判用水高峰，多变量协调控制。'
-  },
-  {
-    id: 6,
-    title: '第六幕：最终效果与价值',
+    title: '第五幕：最终效果与价值',
     duration: 15,
     subtitle: '效率最大化，楼层用水均匀。能耗降低45%，保障供水连续可靠。',
     description: '7x24小时稳定运行，99.5%系统可用性。'
+  },
+  {
+    id: 6,
+    title: '第六幕：MPC 智能决策与精准把控',
+    duration: 15,
+    subtitle: '基于MPC模型预测控制，实现多变量协调，优于传统PID。实时优化水泵运行组合，精准把控流量。',
+    description: '提前预判用水高峰，多变量协调控制。'
   }
 ];
 
