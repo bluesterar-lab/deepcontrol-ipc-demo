@@ -529,11 +529,107 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillStyle = '#22c55e';
       ctx.fill();
 
+      // ========== 闭环流程：水泵→楼内水压→传感器 ==========
+      // 从变频泵到建筑的主管道
+      const pipeStartX = pumpX - 30;
+      const pipeStartY = pumpMotorY;
+      const pipeEndX = buildingX + 30;
+      const pipeEndY = buildingY + floorHeight * floorCount / 2 - 10;
+
+      // 主管道（供水）
+      ctx.beginPath();
+      ctx.moveTo(pipeStartX, pipeStartY);
+      ctx.lineTo(pipeStartX, pipeStartY + 30);
+      ctx.lineTo(buildingX + 30, buildingY + floorHeight * floorCount / 2 - 10);
+      ctx.lineTo(buildingX + 30, topFloorY);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // 水流动画（泵到楼内）
+      const waterFlow = (time * 5) % 1;
+      const flowX = pipeStartX + (pipeEndX - pipeStartX) * waterFlow * 0.3;
+      const flowY = pipeStartY + (buildingY + floorHeight * floorCount / 2 - 10 - pipeStartY) * waterFlow;
+      
+      ctx.beginPath();
+      ctx.arc(flowX, flowY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#60a5fa';
+      ctx.fill();
+
+      // 楼内各楼层水压状态
+      const floorPressures = [
+        { floor: 5, pressure: 0.45, status: 'normal' },
+        { floor: 4, pressure: 0.43, status: 'normal' },
+        { floor: 3, pressure: 0.42, status: 'normal' },
+        { floor: 2, pressure: 0.41, status: 'normal' },
+        { floor: 1, pressure: 0.40, status: 'normal' }
+      ];
+
+      floorPressures.forEach((fp, i) => {
+        const fy = buildingY - floorHeight * floorCount / 2 + i * floorHeight + floorHeight / 2;
+        const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.02;
+        const currentPressure = fp.pressure + pressureChange;
+        
+        // 水压指示条
+        const barWidth = currentPressure * 80;
+        const barColor = currentPressure > 0.46 ? '#ef4444' : currentPressure < 0.38 ? '#f97316' : '#22c55e';
+        
+        ctx.fillStyle = barColor;
+        ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
+        
+        // 压力数值
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '10px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(currentPressure.toFixed(3) + ' MPa', buildingX + 35 + barWidth + 5, fy + 4);
+      });
+
+      // 标注：供水管道
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('供水管道', (pumpX + buildingX) / 2 - 30, buildingY + floorHeight * floorCount / 2 + 20);
+
+      // ========== 闭环反馈线（从楼内到泵房）==========
+      // 虚线表示反馈信号
+      ctx.beginPath();
+      ctx.moveTo(buildingX + 25, topFloorY - 18);
+      ctx.lineTo(buildingX + 25, pumpMotorY);
+      ctx.lineTo(pumpX, pumpMotorY);
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 反馈信号动画
+      const feedbackFlow = (time * 3 + 0.3) % 1;
+      const feedbackX = buildingX + 25 + (pumpX - buildingX - 25) * feedbackFlow;
+      const feedbackY = topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5;
+      
+      if (feedbackFlow > 0.5) {
+        const secondPhase = (feedbackFlow - 0.5) * 2;
+        const finalX = buildingX + 25;
+        const finalY = pumpMotorY + secondPhase * (buildingX + 25 - pumpX);
+      }
+      
+      ctx.beginPath();
+      ctx.arc(buildingX + 25, topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#8b5cf6';
+      ctx.fill();
+
+      // 标注：闭环反馈
+      ctx.fillStyle = '#8b5cf6';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('闭环反馈', (buildingX + pumpX) / 2, pumpMotorY - 10);
+
       // ========== 工作流程说明 ==========
       const processSteps = [
-        { step: 1, text: '压力表采集数据', x: centerX - 120, y: centerY + 130 },
-        { step: 2, text: '4G上传至云端', x: centerX, y: centerY + 130 },
-        { step: 3, text: '边缘控制器决策', x: centerX + 120, y: centerY + 130 }
+        { step: 1, text: '压力表采集', x: centerX - 150, y: centerY + 140 },
+        { step: 2, text: '4G上传云端', x: centerX - 50, y: centerY + 140 },
+        { step: 3, text: '边缘控制决策', x: centerX + 50, y: centerY + 140 },
+        { step: 4, text: '变频泵调节', x: centerX + 150, y: centerY + 140 }
       ];
 
       processSteps.forEach((ps, i) => {
@@ -556,17 +652,34 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       });
 
       // 流程箭头
+      for (let i = 0; i < 3; i++) {
+        const arrowX = processSteps[i].x + 20;
+        ctx.beginPath();
+        ctx.moveTo(arrowX, centerY + 140);
+        ctx.lineTo(arrowX + 10, centerY + 140);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(arrowX + 10, centerY + 140 - 3);
+        ctx.lineTo(arrowX + 13, centerY + 140);
+        ctx.lineTo(arrowX + 10, centerY + 140 + 3);
+        ctx.fillStyle = '#475569';
+        ctx.fill();
+      }
+
+      // 闭环箭头（从步骤4回到步骤1）
       ctx.beginPath();
-      ctx.moveTo(centerX - 105, centerY + 130);
-      ctx.lineTo(centerX - 95, centerY + 130);
-      ctx.strokeStyle = '#475569';
+      ctx.moveTo(processSteps[3].x, centerY + 165);
+      ctx.lineTo(processSteps[3].x, centerY + 185);
+      ctx.lineTo(processSteps[0].x, centerY + 185);
+      ctx.lineTo(processSteps[0].x, centerY + 165);
+      ctx.strokeStyle = '#8b5cf6';
       ctx.lineWidth = 2;
+      ctx.setLineDash([3, 3]);
       ctx.stroke();
-      
-      ctx.beginPath();
-      ctx.moveTo(centerX + 15, centerY + 130);
-      ctx.lineTo(centerX + 25, centerY + 130);
-      ctx.stroke();
+      ctx.setLineDash([]);
 
       // ========== 关键指标 ==========
       const metrics = [
@@ -1045,6 +1158,253 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.globalAlpha = 1;
     };
 
+    // 场景6：不同时段用水需求与自动调节流程
+    const drawScene6 = (width: number, height: number, time: number, alpha: number = 1) => {
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, width, height);
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      ctx.fillStyle = '#ec4899';
+      ctx.font = 'bold 18px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('不同时段用水需求与自动调节', centerX, 35);
+
+      // ========== 左侧：不同时段用水需求曲线 ==========
+      const chartX = centerX - 220;
+      const chartY = centerY - 80;
+      const chartWidth = 200;
+      const chartHeight = 180;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(chartX, chartY, chartWidth, chartHeight);
+      ctx.strokeStyle = '#475569';
+      ctx.strokeRect(chartX, chartY, chartWidth, chartHeight);
+
+      // 标题
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('24小时用水需求曲线', chartX + chartWidth / 2, chartY + 20);
+
+      // 网格线
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(chartX, chartY + (chartHeight / 5) * i);
+        ctx.lineTo(chartX + chartWidth, chartY + (chartHeight / 5) * i);
+        ctx.stroke();
+      }
+
+      // 时间标签
+      const timeLabels = ['0时', '6时', '12时', '18时', '24时'];
+      timeLabels.forEach((label, i) => {
+        const lx = chartX + (chartWidth / 4) * i;
+        const ly = chartY + chartHeight + 15;
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, lx, ly);
+      });
+
+      // 用水需求曲线
+      ctx.beginPath();
+      ctx.moveTo(chartX, chartY + chartHeight - 20);
+      
+      const demandPoints = [
+        { x: 0, y: 0.3 },
+        { x: 0.15, y: 0.6 },
+        { x: 0.25, y: 0.9 },
+        { x: 0.35, y: 0.7 },
+        { x: 0.5, y: 0.4 },
+        { x: 0.6, y: 0.5 },
+        { x: 0.75, y: 0.8 },
+        { x: 0.85, y: 0.95 },
+        { x: 0.95, y: 0.5 },
+        { x: 1.0, y: 0.3 }
+      ];
+
+      demandPoints.forEach((point, i) => {
+        const px = chartX + point.x * chartWidth;
+        const py = chartY + chartHeight - 20 - point.y * (chartHeight - 40);
+        ctx.lineTo(px, py);
+      });
+
+      ctx.strokeStyle = '#ec4899';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // 当前时间指示点
+      const currentTime = (time * 0.2) % 1;
+      const currentX = chartX + currentTime * chartWidth;
+      
+      // 计算当前Y值
+      let currentY = chartY + chartHeight - 20;
+      for (let i = 0; i < demandPoints.length - 1; i++) {
+        if (currentTime >= demandPoints[i].x && currentTime <= demandPoints[i + 1].x) {
+          const t = (currentTime - demandPoints[i].x) / (demandPoints[i + 1].x - demandPoints[i].x);
+          const y = demandPoints[i].y + t * (demandPoints[i + 1].y - demandPoints[i].y);
+          currentY = chartY + chartHeight - 20 - y * (chartHeight - 40);
+          break;
+        }
+      }
+
+      ctx.beginPath();
+      ctx.arc(currentX, currentY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#ec4899';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 当前时间标注
+      const currentHour = Math.floor(currentTime * 24);
+      const currentMin = Math.floor((currentTime * 24 - currentHour) * 60);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`当前: ${currentHour}:${currentMin.toString().padStart(2, '0')}`, chartX + chartWidth / 2, chartY + chartHeight + 35);
+
+      // ========== 中间：时段分类说明 ==========
+      const timePeriods = [
+        { period: '低谷期', time: '0-6时', demand: '低', color: '#64748b', pressure: '0.38 MPa' },
+        { period: '早高峰', time: '6-9时', demand: '高', color: '#ef4444', pressure: '0.42 MPa' },
+        { period: '平稳期', time: '9-16时', demand: '中', color: '#22c55e', pressure: '0.40 MPa' },
+        { period: '晚高峰', time: '16-21时', demand: '极高', color: '#f97316', pressure: '0.45 MPa' },
+        { period: '休息期', time: '21-24时', demand: '低', color: '#64748b', pressure: '0.38 MPa' }
+      ];
+
+      const periodX = centerX + 20;
+      const periodY = chartY;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('时段分类', periodX + 50, chartY + 20);
+
+      timePeriods.forEach((period, i) => {
+        const py = periodY + 40 + i * 30;
+        
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(periodX, py, 140, 25);
+        
+        ctx.fillStyle = period.color;
+        ctx.fillRect(periodX, py, 5, 25);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(period.period + ' ' + period.time, periodX + 10, py + 17);
+        
+        ctx.fillStyle = period.color;
+        ctx.textAlign = 'right';
+        ctx.fillText(period.demand, periodX + 135, py + 17);
+      });
+
+      // ========== 右侧：自动调节流程图 ==========
+      const flowX = periodX + 160;
+      const flowY = chartY;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('自动调节流程', flowX + 60, chartY + 20);
+
+      const flowNodes = [
+        { name: '监测用水需求', y: flowY + 45, color: '#3b82f6' },
+        { name: 'MPC算法预测', y: flowY + 80, color: '#8b5cf6' },
+        { name: '计算最优压力', y: flowY + 115, color: '#06b6d4' },
+        { name: '调节变频泵', y: flowY + 150, color: '#22c55e' },
+        { name: '实时反馈优化', y: flowY + 185, color: '#f59e0b' }
+      ];
+
+      flowNodes.forEach((node, i) => {
+        const nx = flowX + 60;
+        
+        // 节点背景
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(nx - 50, node.y - 12, 100, 24);
+        ctx.strokeStyle = node.color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(nx - 50, node.y - 12, 100, 24);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(node.name, nx, node.y + 4);
+        
+        // 连接箭头
+        if (i < flowNodes.length - 1) {
+          ctx.beginPath();
+          ctx.moveTo(nx, node.y + 12);
+          ctx.lineTo(nx, flowNodes[i + 1].y - 12);
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          
+          // 箭头
+          ctx.beginPath();
+          ctx.moveTo(nx - 3, flowNodes[i + 1].y - 15);
+          ctx.lineTo(nx, flowNodes[i + 1].y - 12);
+          ctx.lineTo(nx + 3, flowNodes[i + 1].y - 15);
+          ctx.fillStyle = '#475569';
+          ctx.fill();
+        }
+      });
+
+      // ========== 底部：实时调节效果展示 ==========
+      const effectY = chartY + chartHeight + 50;
+      
+      // 不同时段的压力设定值和实际值对比
+      const periods = ['低谷期', '早高峰', '平稳期', '晚高峰', '休息期'];
+      const setPressures = [0.38, 0.42, 0.40, 0.45, 0.38];
+      const actualPressures = [0.38, 0.42, 0.40, 0.45, 0.38];
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('压力设定 vs 实际压力', chartX, effectY);
+
+      periods.forEach((period, i) => {
+        const px = chartX + i * 80;
+        const py = effectY + 25;
+        
+        // 时段标签
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(period, px + 25, py + 15);
+        
+        // 设定压力条
+        const setBarWidth = setPressures[i] * 150;
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(px, py + 25, setBarWidth, 10);
+        
+        // 实际压力条（带动画）
+        const actualBarWidth = actualPressures[i] * 150 + Math.sin(time * 3 + i) * 5;
+        ctx.fillStyle = i === Math.floor(currentTime * 5) ? '#ec4899' : '#22c55e';
+        ctx.fillRect(px, py + 25, actualBarWidth, 10);
+        
+        // 数值标注
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '9px system-ui, sans-serif';
+        ctx.fillText(setPressures[i].toFixed(2), px, py + 45);
+      });
+
+      // 当前时段标注
+      const currentPeriodIndex = Math.floor(currentTime * 5);
+      const currentPeriodColor = ['#64748b', '#ef4444', '#22c55e', '#f97316', '#64748b'][currentPeriodIndex];
+      ctx.fillStyle = currentPeriodColor;
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('当前时段: ' + periods[currentPeriodIndex], centerX, effectY + 60);
+
+      ctx.globalAlpha = 1;
+    };
+
     // 根据场景绘制函数
     const drawScene = (sceneNum: number, width: number, height: number, time: number, alpha: number) => {
       switch (sceneNum) {
@@ -1053,6 +1413,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         case 3: drawScene3(width, height, time, alpha); break;
         case 4: drawScene4(width, height, time, alpha); break;
         case 5: drawScene5(width, height, time, alpha); break;
+        case 6: drawScene6(width, height, time, alpha); break;
       }
     };
 
