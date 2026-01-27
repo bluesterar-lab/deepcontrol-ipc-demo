@@ -33,8 +33,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   const animationTimeRef = useRef<number>(0);
   const sceneRef = useRef<number>(scene);
   
-  // 全局缩放因子 - 适中大小
-  const scale = 2.0;
+  // 全局缩放因子 - 缩小50%
+  const scale = 1.0;
   
   // 检测场景变化
   useEffect(() => {
