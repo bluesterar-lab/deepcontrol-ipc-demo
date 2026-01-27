@@ -58,7 +58,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillRect(0, 0, width, height);
 
       const centerX = width / 2;
-      const centerY = height / 2 - 40;
+      const centerY = height / 2;
 
       ctx.fillStyle = '#ef4444';
       ctx.font = 'bold 18px system-ui, sans-serif';
@@ -155,7 +155,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillRect(0, 0, width, height);
 
       const centerX = width / 2;
-      const centerY = height * 0.45;
+      const centerY = height / 2;
 
       ctx.fillStyle = '#3b82f6';
       ctx.font = 'bold 18px system-ui, sans-serif';
@@ -326,7 +326,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillRect(0, 0, width, height);
 
       const centerX = width / 2;
-      const centerY = height * 0.55;
+      const centerY = height / 2;
 
       ctx.fillStyle = '#22c55e';
       ctx.font = 'bold 18px system-ui, sans-serif';
@@ -711,7 +711,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillRect(0, 0, width, height);
 
       const centerX = width / 2;
-      const centerY = height * 0.47;
+      const centerY = height / 2;
 
       ctx.fillStyle = '#8b5cf6';
       ctx.font = 'bold 18px system-ui, sans-serif';
