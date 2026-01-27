@@ -996,7 +996,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     <canvas
       ref={canvasRef}
       className="w-full h-full"
-      style={{ display: 'block' }}
+      style={{ display: 'block', pointerEvents: 'none' }}
     />
   );
 }
