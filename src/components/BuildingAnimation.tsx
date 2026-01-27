@@ -711,12 +711,12 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillRect(0, 0, width, height);
 
       const centerX = width / 2;
-      const centerY = height / 2;
+      const centerY = height / 2 - 20;
 
       ctx.fillStyle = '#8b5cf6';
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('MPC智能算法 vs 传统PID控制对比', centerX, 35);
+      ctx.fillText('MPC智能算法 vs 传统PID控制对比', centerX, 50);
 
       // ========== 上半部分：压力响应曲线对比图 ==========
       const chartX = centerX - 200;
