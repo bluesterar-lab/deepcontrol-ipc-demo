@@ -125,8 +125,9 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
                            time: number, color: string = colors.neonBlue) => {
     if (path.length < 2) return;
     
-    for (let i = 0; i < 20; i++) {
-      const progress = ((time * 3 + i / 20) % 1);
+    // 增加粒子数量和动画速度，使效果更明显
+    for (let i = 0; i < 30; i++) {
+      const progress = ((time * 5 + i / 30) % 1);
       const segmentIndex = Math.floor(progress * (path.length - 1));
       const segmentProgress = (progress * (path.length - 1)) % 1;
       
@@ -136,12 +137,20 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const x = p1.x + (p2.x - p1.x) * segmentProgress;
       const y = p1.y + (p2.y - p1.y) * segmentProgress;
       
-      const glow = ctx.createRadialGradient(x, y, 0, x, y, 12 * scale);
+      // 增加粒子大小和发光效果
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, 18 * scale);
       glow.addColorStop(0, color + 'ff');
+      glow.addColorStop(0.3, color + 'aa');
       glow.addColorStop(1, color + '00');
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(x, y, 12 * scale, 0, Math.PI * 2);
+      ctx.arc(x, y, 18 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // 添加核心亮白色中心
+      ctx.fillStyle = colors.brightWhite + 'ff';
+      ctx.beginPath();
+      ctx.arc(x, y, 4 * scale, 0, Math.PI * 2);
       ctx.fill();
     }
   };
@@ -246,8 +255,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     ctx.textAlign = 'center';
     ctx.fillText('⚡ DeepControl', logoPos.x, logoPos.y);
     
-    // 脉冲效果
-    const pulseRadius = 30 * scale + Math.sin(time * 4) * 10 * scale;
+    // 脉冲效果 - 加快速度
+    const pulseRadius = 30 * scale + Math.sin(time * 6) * 10 * scale;
     const gradient = ctx.createRadialGradient(logoPos.x, logoPos.y, 0, logoPos.x, logoPos.y, pulseRadius);
     gradient.addColorStop(0, colors.success + '60');
     gradient.addColorStop(1, colors.success + '00');
@@ -256,8 +265,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     ctx.arc(logoPos.x, logoPos.y, pulseRadius, 0, Math.PI * 2);
     ctx.fill();
     
-    // 从DeepControl扩散出的智能波
-    const waveRadius = (time % 2) * 150 * scale + 20 * scale;
+    // 从DeepControl扩散出的智能波 - 加快速度
+    const waveRadius = (time % 1.5) * 150 * scale + 20 * scale;
     const waveAlpha = 1 - ((time % 2) / 2);
     ctx.strokeStyle = colors.success + Math.floor(waveAlpha * 100).toString(16).padStart(2, '0');
     ctx.lineWidth = 2 * scale;
@@ -292,7 +301,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.arc(pos.x, pos.y, 8 * scale, 0, Math.PI * 2);
       ctx.fill();
       
-      const sensorPulse = 15 * scale + Math.sin(time * 4 + i) * 5 * scale;
+      const sensorPulse = 15 * scale + Math.sin(time * 6 + i) * 5 * scale;
       ctx.strokeStyle = colors.success + '80';
       ctx.lineWidth = 2 * scale;
       ctx.beginPath();
@@ -323,14 +332,15 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     const sensorZ = tankZ + tankHeight + 30 * scale;
     const sensorPos = isoTransform(sensorX, sensorY, sensorZ);
     
-    // 传感器发光效果
-    const sensorGlow = ctx.createRadialGradient(sensorPos.x, sensorPos.y, 0, sensorPos.x, sensorPos.y, 25 * scale);
+    // 传感器发光效果 - 添加脉冲动画
+    const sensorGlowRadius = 25 * scale + Math.sin(time * 5) * 10 * scale;
+    const sensorGlow = ctx.createRadialGradient(sensorPos.x, sensorPos.y, 0, sensorPos.x, sensorPos.y, sensorGlowRadius);
     sensorGlow.addColorStop(0, colors.orange + 'ff');
-    sensorGlow.addColorStop(0.5, colors.orange + '60');
+    sensorGlow.addColorStop(0.5, colors.orange + '80');
     sensorGlow.addColorStop(1, colors.orange + '00');
     ctx.fillStyle = sensorGlow;
     ctx.beginPath();
-    ctx.arc(sensorPos.x, sensorPos.y, 25 * scale, 0, Math.PI * 2);
+    ctx.arc(sensorPos.x, sensorPos.y, sensorGlowRadius, 0, Math.PI * 2);
     ctx.fill();
     
     // 传感器主体
@@ -496,8 +506,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     ctx.arc(pumpPos.x, pumpPos.y, pumpRadius, 0, Math.PI * 2);
     ctx.fill();
     
-    // 水泵旋转动画（叶片）
-    const pumpRotation = time * 8;
+    // 水泵旋转动画（叶片）- 加快速度
+    const pumpRotation = time * 12;
     ctx.strokeStyle = colors.brightWhite;
     ctx.lineWidth = 2 * scale;
     for (let i = 0; i < 6; i++) {
@@ -583,7 +593,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.arc(pos.x, pos.y, 6 * scale, 0, Math.PI * 2);
       ctx.fill();
       
-      const sensorPulse = 12 * scale + Math.sin(time * 3 + i * 0.5) * 4 * scale;
+      const sensorPulse = 12 * scale + Math.sin(time * 5 + i * 0.5) * 4 * scale;
       ctx.strokeStyle = colors.cyan + '80';
       ctx.lineWidth = 1.5 * scale;
       ctx.beginPath();
@@ -719,9 +729,9 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     ctx.textAlign = 'center';
     ctx.fillText('⚡', efficiencyX, efficiencyY);
     
-    // 节能数字
+    // 节能数字 - 加快动画速度
     const energySaving = 45;
-    const currentAngle = (time % 2) * Math.PI;
+    const currentAngle = (time % 1.5) * Math.PI;
     const displaySaving = Math.floor(energySaving * (time % 2));
     
     ctx.fillStyle = colors.success;
@@ -855,7 +865,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const deltaTime = timestamp - timeRef.current;
       timeRef.current = timestamp;
       
-      animationTimeRef.current += deltaTime * 0.001;
+      // 加快动画速度（翻倍）
+      animationTimeRef.current += deltaTime * 0.002;
       
       drawScene(ctx, canvasWidth, canvasHeight, animationTimeRef.current, scale);
       
