@@ -31,6 +31,16 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   const animationRef = useRef<number | null>(null);
   const timeRef = useRef<number>(0);
   const animationTimeRef = useRef<number>(0);
+  const sceneRef = useRef<number>(scene);
+  
+  // 检测场景变化
+  useEffect(() => {
+    if (sceneRef.current !== scene) {
+      sceneRef.current = scene;
+      animationTimeRef.current = 0; // 重置动画时间
+      timeRef.current = 0; // 重置时间戳
+    }
+  }, [scene]);
   
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,7 +86,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [scene]);
+  }, []); // 只在组件挂载时执行一次
 
   // 绘制等轴测立方体
   const drawIsoCube = (ctx: CanvasRenderingContext2D, x: number, y: number, z: number, 
@@ -263,7 +273,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.stroke();
     }
 
-    switch (scene) {
+    // 根据当前 sceneRef.current 绘制场景
+    switch (sceneRef.current) {
       case 1:
         drawScene1(ctx, centerX, centerY, time);
         break;
