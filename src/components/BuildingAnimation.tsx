@@ -33,12 +33,15 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   const animationTimeRef = useRef<number>(0);
   const sceneRef = useRef<number>(scene);
   
+  // 全局缩放因子
+  const scale = 1.5;
+  
   // 检测场景变化
   useEffect(() => {
     if (sceneRef.current !== scene) {
       sceneRef.current = scene;
-      animationTimeRef.current = 0; // 重置动画时间
-      timeRef.current = 0; // 重置时间戳
+      animationTimeRef.current = 0;
+      timeRef.current = 0;
     }
   }, [scene]);
   
@@ -49,7 +52,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 存储画布实际尺寸
     let canvasWidth = 0;
     let canvasHeight = 0;
 
@@ -62,7 +64,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         canvas.height = canvasHeight;
         canvas.style.width = rect.width + 'px';
         canvas.style.height = rect.height + 'px';
-        // 不使用 scale，直接使用完整画布尺寸
       }
     };
     
@@ -79,8 +80,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       
       animationTimeRef.current += deltaTime * 0.001;
       
-      // 传入完整画布尺寸，不除以2
-      drawScene(ctx, canvasWidth, canvasHeight, animationTimeRef.current);
+      drawScene(ctx, canvasWidth, canvasHeight, animationTimeRef.current, scale);
       
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -93,7 +93,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []); // 只在组件挂载时执行一次
+  }, []);
 
   // 绘制等轴测立方体
   const drawIsoCube = (ctx: CanvasRenderingContext2D, x: number, y: number, z: number, 
@@ -140,13 +140,13 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   const drawIsoBuilding = (ctx: CanvasRenderingContext2D, centerX: number, centerY: number, 
                           time: number, isTransparent: boolean = false) => {
     const floors = 30;
-    const floorHeight = 8;
-    const buildingWidth = 60;
-    const buildingDepth = 60;
+    const floorHeight = 12 * scale;
+    const buildingWidth = 90 * scale;
+    const buildingDepth = 90 * scale;
     const buildingHeight = floors * floorHeight;
     
-    const startX = centerX - 200;
-    const startY = centerY + 100;
+    const startX = centerX - 300 * scale;
+    const startY = centerY + 150 * scale;
     
     for (let floor = 0; floor < floors; floor++) {
       const y = startY;
@@ -163,7 +163,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         const front = isoTransform(startX, y + buildingDepth, z);
         
         ctx.strokeStyle = colors.neonBlueDim;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
         
         ctx.beginPath();
         ctx.moveTo(top.x, top.y);
@@ -196,18 +196,18 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const x = p1.x + (p2.x - p1.x) * segmentProgress;
       const y = p1.y + (p2.y - p1.y) * segmentProgress;
       
-      const glow = ctx.createRadialGradient(x, y, 0, x, y, 8);
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, 12 * scale);
       glow.addColorStop(0, color + 'ff');
       glow.addColorStop(0.5, color + '60');
       glow.addColorStop(1, color + '00');
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(x, y, 8, 0, Math.PI * 2);
+      ctx.arc(x, y, 12 * scale, 0, Math.PI * 2);
       ctx.fill();
       
       ctx.fillStyle = colors.brightWhite;
       ctx.beginPath();
-      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.arc(x, y, 3 * scale, 0, Math.PI * 2);
       ctx.fill();
     }
   };
@@ -216,46 +216,46 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   const drawPulseRing = (ctx: CanvasRenderingContext2D, x: number, y: number, 
                         time: number, color: string = colors.neonBlue) => {
     const pulsePhase = (time * 2) % 1;
-    const radius = pulsePhase * 25;
+    const radius = pulsePhase * 35 * scale;
     const alpha = 1 - pulsePhase;
     
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.strokeStyle = color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.stroke();
     
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.arc(x, y, 6 * scale, 0, Math.PI * 2);
     ctx.fill();
   };
 
   // 绘制技术指标浮窗
   const drawTechIndicator = (ctx: CanvasRenderingContext2D, x: number, y: number, 
                             label: string, value: string, time: number) => {
-    const width = 180;
-    const height = 50;
+    const width = 220 * scale;
+    const height = 60 * scale;
     
     ctx.fillStyle = 'rgba(10, 22, 40, 0.9)';
     ctx.fillRect(x, y, width, height);
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     ctx.strokeRect(x, y, width, height);
     
     ctx.fillStyle = colors.neonBlue;
-    ctx.font = 'bold 12px monospace';
+    ctx.font = `bold ${14 * scale}px monospace`;
     ctx.textAlign = 'left';
-    ctx.fillText(label, x + 10, y + 18);
+    ctx.fillText(label, x + 15 * scale, y + 22 * scale);
     
     const blink = Math.sin(time * 8) > 0;
     ctx.fillStyle = blink ? colors.brightWhite : colors.neonBlueDim;
-    ctx.font = 'bold 14px monospace';
-    ctx.fillText(value, x + 10, y + 38);
+    ctx.font = `bold ${16 * scale}px monospace`;
+    ctx.fillText(value, x + 15 * scale, y + 45 * scale);
   };
 
   // 绘制主场景
-  const drawScene = (ctx: CanvasRenderingContext2D, width: number, height: number, time: number) => {
+  const drawScene = (ctx: CanvasRenderingContext2D, width: number, height: number, time: number, scale: number) => {
     ctx.clearRect(0, 0, width, height);
     
     const centerX = width / 2;
@@ -271,7 +271,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     // 网格背景
     ctx.strokeStyle = colors.neonBlueDim;
     ctx.lineWidth = 0.5;
-    const gridSize = 30;
+    const gridSize = 40 * scale;
     for (let x = 0; x < width; x += gridSize) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
@@ -285,34 +285,33 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.stroke();
     }
 
-    // 根据当前 sceneRef.current 绘制场景
     switch (sceneRef.current) {
       case 1:
-        drawScene1(ctx, centerX, centerY, time);
+        drawScene1(ctx, centerX, centerY, time, scale);
         break;
       case 2:
-        drawScene2(ctx, centerX, centerY, time);
+        drawScene2(ctx, centerX, centerY, time, scale);
         break;
       case 3:
-        drawScene3(ctx, centerX, centerY, time);
+        drawScene3(ctx, centerX, centerY, time, scale);
         break;
       case 4:
-        drawScene4(ctx, centerX, centerY, time);
+        drawScene4(ctx, centerX, centerY, time, scale);
         break;
       case 5:
-        drawScene5(ctx, centerX, centerY, time);
+        drawScene5(ctx, centerX, centerY, time, scale);
         break;
     }
   };
 
   // 第一幕
-  const drawScene1 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number) => {
-    const building = drawIsoBuilding(ctx, cx - 100, cy, time, false);
+  const drawScene1 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number, scale: number) => {
+    const building = drawIsoBuilding(ctx, cx - 150 * scale, cy, time, false);
     
-    const pumpX = cx - 100 + building.buildingWidth / 2;
-    const pumpY = cy + 250;
+    const pumpX = cx - 150 * scale + building.buildingWidth / 2;
+    const pumpY = cy + 350 * scale;
     
-    const pumpSize = 40 + Math.sin(time * 5) * 5;
+    const pumpSize = 60 * scale + Math.sin(time * 5) * 10 * scale;
     const pumpGradient = ctx.createRadialGradient(pumpX, pumpY, 0, pumpX, pumpY, pumpSize);
     pumpGradient.addColorStop(0, '#ff6666');
     pumpGradient.addColorStop(0.5, colors.warning);
@@ -327,7 +326,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     ctx.translate(pumpX, pumpY);
     ctx.rotate(time * 10);
     ctx.strokeStyle = colors.brightWhite;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4 * scale;
     for (let i = 0; i < 4; i++) {
       ctx.rotate(Math.PI / 2);
       ctx.beginPath();
@@ -339,78 +338,78 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     
     const pipeX = pumpX;
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 12 * scale;
     ctx.beginPath();
     ctx.moveTo(pipeX, pumpY - pumpSize);
-    ctx.lineTo(pipeX, cy - 150);
+    ctx.lineTo(pipeX, cy - 200 * scale);
     ctx.stroke();
     
     const lowFloors = [1, 2, 3, 4, 5];
     lowFloors.forEach((floor, index) => {
-      const floorY = cy + 250 - floor * 20;
-      const iconX = pipeX + 50;
+      const floorY = cy + 350 * scale - floor * 30 * scale;
+      const iconX = pipeX + 75 * scale;
       
       ctx.fillStyle = colors.background;
-      ctx.fillRect(iconX - 20, floorY - 20, 40, 40);
+      ctx.fillRect(iconX - 30 * scale, floorY - 30 * scale, 60 * scale, 60 * scale);
       ctx.strokeStyle = colors.neonBlue;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(iconX - 20, floorY - 20, 40, 40);
+      ctx.lineWidth = 3 * scale;
+      ctx.strokeRect(iconX - 30 * scale, floorY - 30 * scale, 60 * scale, 60 * scale);
       
       ctx.fillStyle = colors.neonBlue;
-      ctx.font = 'bold 14px sans-serif';
+      ctx.font = `bold ${20 * scale}px sans-serif`;
       ctx.textAlign = 'center';
       const iconText = index % 2 === 0 ? '🚿' : '👕';
-      ctx.fillText(iconText, iconX, floorY + 5);
+      ctx.fillText(iconText, iconX, floorY + 8 * scale);
       
       if (time > 2) {
         ctx.strokeStyle = colors.neonBlue;
-        ctx.lineWidth = 12;
+        ctx.lineWidth = 18 * scale;
         ctx.beginPath();
         ctx.moveTo(pipeX, floorY);
-        ctx.lineTo(iconX - 20, floorY);
+        ctx.lineTo(iconX - 30 * scale, floorY);
         ctx.stroke();
         
-        drawChaosFlow(ctx, pipeX, floorY, iconX - 20, floorY, time + index);
+        drawChaosFlow(ctx, pipeX, floorY, iconX - 30 * scale, floorY, time + index, scale);
       }
     });
     
     const highFloors = [20, 25, 30];
     highFloors.forEach((floor) => {
-      const floorY = cy + 250 - floor * 20;
-      const iconX = pipeX + 50;
+      const floorY = cy + 350 * scale - floor * 30 * scale;
+      const iconX = pipeX + 75 * scale;
       
       ctx.strokeStyle = '#334155';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3 * scale;
       ctx.beginPath();
       ctx.moveTo(pipeX, floorY);
-      ctx.lineTo(iconX - 20, floorY);
+      ctx.lineTo(iconX - 30 * scale, floorY);
       ctx.stroke();
       
       if (time > 3) {
-        const dripY = floorY + (time * 20) % 20;
+        const dripY = floorY + (time * 25 * scale) % 30 * scale;
         ctx.fillStyle = colors.neonBlueDim;
         ctx.beginPath();
-        ctx.arc(iconX, dripY, 3, 0, Math.PI * 2);
+        ctx.arc(iconX, dripY, 5 * scale, 0, Math.PI * 2);
         ctx.fill();
       }
     });
     
-    const chartX = cx + 100;
-    const chartY = cy - 50;
-    const chartWidth = 150;
-    const chartHeight = 100;
+    const chartX = cx + 150 * scale;
+    const chartY = cy - 80 * scale;
+    const chartWidth = 220 * scale;
+    const chartHeight = 150 * scale;
     
     ctx.fillStyle = 'rgba(10, 22, 40, 0.9)';
     ctx.fillRect(chartX, chartY, chartWidth, chartHeight);
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     ctx.strokeRect(chartX, chartY, chartWidth, chartHeight);
     
     ctx.beginPath();
     ctx.strokeStyle = colors.warning;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4 * scale;
     for (let x = 0; x < chartWidth; x++) {
-      const oscillation = Math.sin((x / 10 + time * 4) * 0.8) * 35 + Math.sin((x / 5 + time * 6) * 1.5) * 15;
+      const oscillation = Math.sin((x / 10 + time * 4) * 0.8) * 50 * scale + Math.sin((x / 5 + time * 6) * 1.5) * 20 * scale;
       const y = chartY + chartHeight / 2 + oscillation;
       if (x === 0) {
         ctx.moveTo(chartX + x, y);
@@ -421,41 +420,41 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     ctx.stroke();
     
     ctx.fillStyle = colors.warning;
-    ctx.font = 'bold 14px sans-serif';
+    ctx.font = `bold ${18 * scale}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('水力失衡 / 压力振荡', chartX + chartWidth / 2, chartY + chartHeight + 25);
+    ctx.fillText('水力失衡 / 压力振荡', chartX + chartWidth / 2, chartY + chartHeight + 35 * scale);
     
     if (time > 5) {
-      drawTechIndicator(ctx, cx - 200, cy - 200, '响应延迟', '2-3s', time);
-      drawTechIndicator(ctx, cx + 50, cy + 100, '能耗', '145%', time);
+      drawTechIndicator(ctx, cx - 300 * scale, cy - 300 * scale, '响应延迟', '2-3s', time);
+      drawTechIndicator(ctx, cx + 75 * scale, cy + 150 * scale, '能耗', '145%', time);
     }
   };
 
   // 第二幕
-  const drawScene2 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number) => {
-    const pumpRoomX = cx - 150;
-    const pumpRoomY = cy - 100;
-    const pumpRoomWidth = 300;
-    const pumpRoomHeight = 200;
+  const drawScene2 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number, scale: number) => {
+    const pumpRoomX = cx - 220 * scale;
+    const pumpRoomY = cy - 150 * scale;
+    const pumpRoomWidth = 450 * scale;
+    const pumpRoomHeight = 300 * scale;
     
     ctx.fillStyle = 'rgba(10, 22, 40, 0.95)';
     ctx.fillRect(pumpRoomX, pumpRoomY, pumpRoomWidth, pumpRoomHeight);
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     ctx.strokeRect(pumpRoomX, pumpRoomY, pumpRoomWidth, pumpRoomHeight);
     
     const deviceX = pumpRoomX + pumpRoomWidth / 2;
     const deviceY = pumpRoomY + pumpRoomHeight / 2;
-    const deviceWidth = 80;
-    const deviceHeight = 60;
+    const deviceWidth = 120 * scale;
+    const deviceHeight = 90 * scale;
     
     const breathePhase = (Math.sin(time * 2) + 1) / 2;
-    const breatheGlow = ctx.createRadialGradient(deviceX, deviceY, 0, deviceX, deviceY, 60 + breathePhase * 20);
+    const breatheGlow = ctx.createRadialGradient(deviceX, deviceY, 0, deviceX, deviceY, 90 * scale + breathePhase * 30 * scale);
     breatheGlow.addColorStop(0, `rgba(0, 240, 255, ${0.3 + breathePhase * 0.2})`);
     breatheGlow.addColorStop(1, 'rgba(0, 240, 255, 0)');
     ctx.fillStyle = breatheGlow;
     ctx.beginPath();
-    ctx.arc(deviceX, deviceY, 80, 0, Math.PI * 2);
+    ctx.arc(deviceX, deviceY, 120 * scale, 0, Math.PI * 2);
     ctx.fill();
     
     const deviceGradient = ctx.createLinearGradient(deviceX - deviceWidth / 2, deviceY - deviceHeight / 2,
@@ -466,28 +465,28 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     ctx.fillStyle = deviceGradient;
     ctx.fillRect(deviceX - deviceWidth / 2, deviceY - deviceHeight / 2, deviceWidth, deviceHeight);
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     ctx.strokeRect(deviceX - deviceWidth / 2, deviceY - deviceHeight / 2, deviceWidth, deviceHeight);
     
     const ledPositions = [
-      {x: deviceX - 25, y: deviceY - 15},
-      {x: deviceX, y: deviceY - 20},
-      {x: deviceX + 25, y: deviceY - 15}
+      {x: deviceX - 35 * scale, y: deviceY - 20 * scale},
+      {x: deviceX, y: deviceY - 30 * scale},
+      {x: deviceX + 35 * scale, y: deviceY - 20 * scale}
     ];
     ledPositions.forEach((pos, i) => {
       const ledPhase = ((time * 2 + i * 0.3) % 1);
       ctx.fillStyle = `rgba(0, 240, 255, ${0.5 + Math.sin(ledPhase * Math.PI * 2) * 0.5})`;
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+      ctx.arc(pos.x, pos.y, 6 * scale, 0, Math.PI * 2);
       ctx.fill();
     });
     
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 14px sans-serif';
+    ctx.font = `bold ${20 * scale}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('DeepControl', deviceX, deviceY + 5);
-    ctx.font = '12px sans-serif';
-    ctx.fillText('AIPC', deviceX, deviceY + 22);
+    ctx.fillText('DeepControl', deviceX, deviceY + 8 * scale);
+    ctx.font = `${16 * scale}px sans-serif`;
+    ctx.fillText('AIPC', deviceX, deviceY + 33 * scale);
     
     const layers = [
       {name: '物理系统层', icon: '⚙️'},
@@ -497,9 +496,9 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       {name: '云端服务层', icon: '☁️'}
     ];
     
-    const layerStartY = pumpRoomY + pumpRoomHeight + 20;
-    const layerHeight = 35;
-    const layerSpacing = 40;
+    const layerStartY = pumpRoomY + pumpRoomHeight + 30 * scale;
+    const layerHeight = 50 * scale;
+    const layerSpacing = 60 * scale;
     
     layers.forEach((layer, index) => {
       const layerY = layerStartY + index * layerSpacing;
@@ -509,82 +508,82 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillStyle = `rgba(0, 240, 255, ${0.1 + scanProgress * 0.2})`;
         ctx.fillRect(pumpRoomX, layerY, pumpRoomWidth, layerHeight);
         ctx.strokeStyle = `rgba(0, 240, 255, ${scanProgress})`;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3 * scale;
         ctx.strokeRect(pumpRoomX, layerY, pumpRoomWidth, layerHeight);
         
         ctx.strokeStyle = colors.neonBlueDim;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5 * scale;
         for (let i = 0; i < 3; i++) {
-          const lineY = layerY + 5 + i * 12;
+          const lineY = layerY + 8 * scale + i * 18 * scale;
           ctx.beginPath();
-          ctx.moveTo(pumpRoomX + 10, lineY);
-          ctx.lineTo(pumpRoomX + 30 + (scanProgress * pumpRoomWidth * 0.7), lineY);
+          ctx.moveTo(pumpRoomX + 15 * scale, lineY);
+          ctx.lineTo(pumpRoomX + 45 * scale + (scanProgress * pumpRoomWidth * 0.7), lineY);
           ctx.stroke();
         }
         
         ctx.fillStyle = colors.neonBlue;
-        ctx.font = 'bold 12px sans-serif';
+        ctx.font = `bold ${16 * scale}px sans-serif`;
         ctx.textAlign = 'left';
-        ctx.fillText(`${layer.icon} ${layer.name}`, pumpRoomX + 15, layerY + 22);
+        ctx.fillText(`${layer.icon} ${layer.name}`, pumpRoomX + 20 * scale, layerY + 30 * scale);
         
         if (scanProgress < 1) {
           const scanX = pumpRoomX + scanProgress * pumpRoomWidth;
           ctx.fillStyle = 'rgba(0, 240, 255, 0.5)';
-          ctx.fillRect(scanX, layerY, 2, layerHeight);
+          ctx.fillRect(scanX, layerY, 3 * scale, layerHeight);
         }
       }
     });
     
     if (time > 8) {
-      const sensorX = pumpRoomX + pumpRoomWidth - 50;
-      const sensorY = pumpRoomY + 100;
+      const sensorX = pumpRoomX + pumpRoomWidth - 75 * scale;
+      const sensorY = pumpRoomY + 150 * scale;
       
       drawPulseRing(ctx, sensorX, sensorY, time, colors.success);
       
       if (time > 10) {
         ctx.fillStyle = colors.success;
-        ctx.font = 'bold 16px monospace';
+        ctx.font = `bold ${22 * scale}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('<10ms', sensorX, sensorY - 25);
+        ctx.fillText('<10ms', sensorX, sensorY - 35 * scale);
         
-        const scanWidth = ((time * 50) % 80);
+        const scanWidth = ((time * 50 * scale) % 120 * scale);
         ctx.strokeStyle = colors.success;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3 * scale;
         ctx.beginPath();
-        ctx.moveTo(sensorX - 40, sensorY - 15);
-        ctx.lineTo(sensorX - 40 + scanWidth, sensorY - 15);
+        ctx.moveTo(sensorX - 60 * scale, sensorY - 20 * scale);
+        ctx.lineTo(sensorX - 60 * scale + scanWidth, sensorY - 20 * scale);
         ctx.stroke();
       }
     }
     
     if (time > 12) {
       ctx.strokeStyle = colors.neonBlue;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 3 * scale;
+      ctx.setLineDash([8 * scale, 8 * scale]);
       ctx.beginPath();
-      ctx.moveTo(deviceX, deviceY - 30);
-      ctx.lineTo(deviceX, pumpRoomY - 30);
-      ctx.lineTo(deviceX + 80, pumpRoomY - 30);
+      ctx.moveTo(deviceX, deviceY - 45 * scale);
+      ctx.lineTo(deviceX, pumpRoomY - 45 * scale);
+      ctx.lineTo(deviceX + 120 * scale, pumpRoomY - 45 * scale);
       ctx.stroke();
       ctx.setLineDash([]);
       
-      drawCloud(ctx, deviceX + 120, pumpRoomY - 30, colors.neonBlue);
+      drawCloud(ctx, deviceX + 180 * scale, pumpRoomY - 45 * scale, colors.neonBlue, scale);
     }
   };
 
   // 第三幕
-  const drawScene3 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number) => {
-    const building = drawIsoBuilding(ctx, cx - 50, cy, time, true);
+  const drawScene3 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number, scale: number) => {
+    const building = drawIsoBuilding(ctx, cx - 75 * scale, cy, time, true);
     
-    const startX = cx - 250;
-    const startY = cy + 100;
-    const buildingWidth = 60;
-    const buildingDepth = 60;
+    const startX = cx - 375 * scale;
+    const startY = cy + 150 * scale;
+    const buildingWidth = 90 * scale;
+    const buildingDepth = 90 * scale;
     const floors = 30;
-    const floorHeight = 8;
+    const floorHeight = 12 * scale;
     
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5 * scale;
     
     for (let corner of [[0, 0], [buildingWidth, 0], [0, buildingDepth], [buildingWidth, buildingDepth]]) {
       const bottom = isoTransform(startX + corner[0], startY + corner[1], 0);
@@ -595,87 +594,87 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.stroke();
     }
     
-    const pipeX = cx - 50;
+    const pipeX = cx - 75 * scale;
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 4;
-    ctx.setLineDash([2, 2]);
+    ctx.lineWidth = 6 * scale;
+    ctx.setLineDash([3 * scale, 3 * scale]);
     ctx.beginPath();
-    ctx.moveTo(pipeX, cy + 300);
-    ctx.lineTo(pipeX, cy - 180);
+    ctx.moveTo(pipeX, cy + 450 * scale);
+    ctx.lineTo(pipeX, cy - 270 * scale);
     ctx.stroke();
     ctx.setLineDash([]);
     
     const sensorPositions = [
-      {x: pipeX, y: cy + 200},
-      {x: pipeX, y: cy + 100},
+      {x: pipeX, y: cy + 300 * scale},
+      {x: pipeX, y: cy + 150 * scale},
       {x: pipeX, y: cy},
-      {x: pipeX, y: cy - 100}
+      {x: pipeX, y: cy - 150 * scale}
     ];
     
     sensorPositions.forEach((pos, index) => {
       const pulsePhase = ((time * 2 + index * 0.5) % 1);
       
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 15 + pulsePhase * 15, 0, Math.PI * 2);
+      ctx.arc(pos.x, pos.y, 20 * scale + pulsePhase * 20 * scale, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(0, 240, 255, ${1 - pulsePhase})`;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3 * scale;
       ctx.stroke();
       
       ctx.fillStyle = colors.neonBlue;
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 6, 0, Math.PI * 2);
+      ctx.arc(pos.x, pos.y, 8 * scale, 0, Math.PI * 2);
       ctx.fill();
       
       if (time > 2) {
-        const pulseX = pos.x + ((time * 100 + index * 30) % 100);
+        const pulseX = pos.x + ((time * 150 * scale + index * 45 * scale) % 150 * scale);
         const pulseY = pos.y;
         
         ctx.fillStyle = colors.neonBlue;
         ctx.beginPath();
-        ctx.arc(pulseX, pulseY, 3, 0, Math.PI * 2);
+        ctx.arc(pulseX, pulseY, 5 * scale, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.strokeStyle = colors.neonBlueDim;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5 * scale;
         ctx.beginPath();
-        ctx.moveTo(pos.x + 6, pos.y);
+        ctx.moveTo(pos.x + 8 * scale, pos.y);
         ctx.lineTo(pulseX, pulseY);
         ctx.stroke();
       }
     });
     
-    const aipcX = cx + 100;
+    const aipcX = cx + 150 * scale;
     const aipcY = cy;
     
-    const aipcGlow = ctx.createRadialGradient(aipcX, aipcY, 0, aipcX, aipcY, 50);
+    const aipcGlow = ctx.createRadialGradient(aipcX, aipcY, 0, aipcX, aipcY, 75 * scale);
     aipcGlow.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
     aipcGlow.addColorStop(1, 'rgba(0, 240, 255, 0)');
     ctx.fillStyle = aipcGlow;
     ctx.beginPath();
-    ctx.arc(aipcX, aipcY, 50, 0, Math.PI * 2);
+    ctx.arc(aipcX, aipcY, 75 * scale, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.fillStyle = '#1e293b';
-    ctx.fillRect(aipcX - 30, aipcY - 25, 60, 50);
+    ctx.fillRect(aipcX - 45 * scale, aipcY - 35 * scale, 90 * scale, 70 * scale);
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(aipcX - 30, aipcY - 25, 60, 50);
+    ctx.lineWidth = 3 * scale;
+    ctx.strokeRect(aipcX - 45 * scale, aipcY - 35 * scale, 90 * scale, 70 * scale);
     
     ctx.fillStyle = colors.neonBlue;
-    ctx.font = 'bold 12px sans-serif';
+    ctx.font = `bold ${18 * scale}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('AIPC', aipcX, aipcY + 5);
+    ctx.fillText('AIPC', aipcX, aipcY + 8 * scale);
     
     if (time > 5) {
-      const dashboardX = cx + 180;
-      const dashboardY = cy - 80;
-      const dashboardWidth = 140;
-      const dashboardHeight = 160;
+      const dashboardX = cx + 270 * scale;
+      const dashboardY = cy - 120 * scale;
+      const dashboardWidth = 210 * scale;
+      const dashboardHeight = 240 * scale;
       
       ctx.fillStyle = 'rgba(10, 22, 40, 0.9)';
       ctx.fillRect(dashboardX, dashboardY, dashboardWidth, dashboardHeight);
       ctx.strokeStyle = colors.neonBlue;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.5 * scale;
       ctx.strokeRect(dashboardX, dashboardY, dashboardWidth, dashboardHeight);
       
       const dataItems = [
@@ -686,124 +685,124 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ];
       
       dataItems.forEach((item, index) => {
-        const itemY = dashboardY + 25 + index * 35;
+        const itemY = dashboardY + 35 * scale + index * 50 * scale;
         const value = item.base + Math.sin(time * 2 + index) * item.vary;
         
         ctx.fillStyle = colors.neonBlue;
-        ctx.font = '11px monospace';
+        ctx.font = `${14 * scale}px monospace`;
         ctx.textAlign = 'left';
-        ctx.fillText(item.label, dashboardX + 10, itemY);
+        ctx.fillText(item.label, dashboardX + 15 * scale, itemY);
         
         ctx.fillStyle = colors.brightWhite;
-        ctx.font = 'bold 13px monospace';
+        ctx.font = `bold ${18 * scale}px monospace`;
         ctx.textAlign = 'right';
-        ctx.fillText(`${value.toFixed(2)} ${item.unit}`, dashboardX + dashboardWidth - 10, itemY);
+        ctx.fillText(`${value.toFixed(2)} ${item.unit}`, dashboardX + dashboardWidth - 15 * scale, itemY);
         
-        const barWidth = (value / (item.base + item.vary)) * (dashboardWidth - 20);
+        const barWidth = (value / (item.base + item.vary)) * (dashboardWidth - 30 * scale);
         ctx.fillStyle = colors.neonBlueDim;
-        ctx.fillRect(dashboardX + 10, itemY + 5, barWidth, 3);
+        ctx.fillRect(dashboardX + 15 * scale, itemY + 8 * scale, barWidth, 5 * scale);
       });
     }
     
-    drawTechIndicator(ctx, cx - 250, cy - 200, '采样频率', '100Hz', time);
+    drawTechIndicator(ctx, cx - 375 * scale, cy - 300 * scale, '采样频率', '100Hz', time);
   };
 
   // 第四幕
-  const drawScene4 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number) => {
+  const drawScene4 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number, scale: number) => {
     const brainX = cx;
     const brainY = cy;
     
-    const brainGlow = ctx.createRadialGradient(brainX, brainY, 0, brainX, brainY, 80);
+    const brainGlow = ctx.createRadialGradient(brainX, brainY, 0, brainX, brainY, 120 * scale);
     brainGlow.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
     brainGlow.addColorStop(1, 'rgba(0, 240, 255, 0)');
     ctx.fillStyle = brainGlow;
     ctx.beginPath();
-    ctx.arc(brainX, brainY, 80, 0, Math.PI * 2);
+    ctx.arc(brainX, brainY, 120 * scale, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.fillStyle = '#0a1628';
     ctx.beginPath();
-    ctx.arc(brainX, brainY, 50, 0, Math.PI * 2);
+    ctx.arc(brainX, brainY, 75 * scale, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4 * scale;
     ctx.stroke();
     
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
-      const innerR = 30;
-      const outerR = 45;
+      const innerR = 45 * scale;
+      const outerR = 65 * scale;
       ctx.beginPath();
       ctx.moveTo(brainX + Math.cos(angle) * innerR, brainY + Math.sin(angle) * innerR);
       ctx.lineTo(brainX + Math.cos(angle + 0.3) * outerR, brainY + Math.sin(angle + 0.3) * outerR);
       ctx.strokeStyle = colors.neonBlue;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3 * scale;
       ctx.stroke();
     }
     
     ctx.fillStyle = colors.neonBlue;
-    ctx.font = 'bold 20px sans-serif';
+    ctx.font = `bold ${28 * scale}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('MPC', brainX, brainY + 7);
+    ctx.fillText('MPC', brainX, brainY + 10 * scale);
     
-    const leftChartX = cx - 220;
-    const rightChartX = cx + 70;
-    const chartWidth = 120;
-    const chartHeight = 100;
-    const chartY = cy + 100;
+    const leftChartX = cx - 330 * scale;
+    const rightChartX = cx + 105 * scale;
+    const chartWidth = 180 * scale;
+    const chartHeight = 150 * scale;
+    const chartY = cy + 150 * scale;
     
-    drawChartBox(ctx, leftChartX, chartY, chartWidth, chartHeight, 'PID (振荡)', colors.warning, time, false);
-    drawChartBox(ctx, rightChartX, chartY, chartWidth, chartHeight, 'MPC (平滑)', colors.success, time, true);
+    drawChartBox(ctx, leftChartX, chartY, chartWidth, chartHeight, 'PID (振荡)', colors.warning, time, false, scale);
+    drawChartBox(ctx, rightChartX, chartY, chartWidth, chartHeight, 'MPC (平滑)', colors.success, time, true, scale);
     
     if (time > 8) {
-      const valveY = cy - 120;
-      const valvePositions = [cx - 100, cx, cx + 100];
+      const valveY = cy - 180 * scale;
+      const valvePositions = [cx - 150 * scale, cx, cx + 150 * scale];
       const valveAngles = [15, 42, 80];
       
       ctx.fillStyle = colors.neonBlue;
-      ctx.font = 'bold 14px sans-serif';
+      ctx.font = `bold ${20 * scale}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText('多变量协同控制', cx, valveY - 50);
+      ctx.fillText('多变量协同控制', cx, valveY - 75 * scale);
       
       valvePositions.forEach((vx, index) => {
         const angle = valveAngles[index];
         
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.arc(vx, valveY, 25, 0, Math.PI * 2);
+        ctx.arc(vx, valveY, 35 * scale, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = colors.neonBlue;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3 * scale;
         ctx.stroke();
         
         ctx.fillStyle = colors.neonBlue;
-        ctx.font = 'bold 14px monospace';
+        ctx.font = `bold ${20 * scale}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText(`${angle}%`, vx, valveY + 5);
+        ctx.fillText(`${angle}%`, vx, valveY + 8 * scale);
         
         ctx.fillStyle = colors.neonBlueDim;
-        ctx.fillRect(vx - 20, valveY + 35, 40, 5);
+        ctx.fillRect(vx - 30 * scale, valveY + 50 * scale, 60 * scale, 8 * scale);
         ctx.fillStyle = colors.neonBlue;
-        ctx.fillRect(vx - 20, valveY + 35, 40 * (angle / 100), 5);
+        ctx.fillRect(vx - 30 * scale, valveY + 50 * scale, 60 * scale * (angle / 100), 8 * scale);
       });
     }
     
     if (time > 10) {
       ctx.fillStyle = colors.neonBlue;
-      ctx.font = '12px monospace';
+      ctx.font = `${16 * scale}px monospace`;
       ctx.textAlign = 'center';
-      ctx.fillText('基于多变量约束的 Model Predictive Control', cx, cy - 180);
+      ctx.fillText('基于多变量约束的 Model Predictive Control', cx, cy - 270 * scale);
     }
   };
 
   // 第五幕
-  const drawScene5 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number) => {
-    const building = drawIsoBuilding(ctx, cx - 50, cy, time, false);
+  const drawScene5 = (ctx: CanvasRenderingContext2D, cx: number, cy: number, time: number, scale: number) => {
+    const building = drawIsoBuilding(ctx, cx - 75 * scale, cy, time, false);
     
-    const pipeX = cx - 50;
+    const pipeX = cx - 75 * scale;
     
     const pipePath: {x: number, y: number}[] = [];
-    for (let y = cy + 300; y >= cy - 180; y -= 10) {
+    for (let y = cy + 450 * scale; y >= cy - 270 * scale; y -= 15 * scale) {
       pipePath.push({x: pipeX, y: y});
     }
     
@@ -812,78 +811,78 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     for (let floor = 1; floor <= 30; floor++) {
       if (floor % 3 !== 0) continue;
       
-      const floorY = cy + 300 - floor * 10;
-      const outletX = pipeX + 30;
+      const floorY = cy + 450 * scale - floor * 15 * scale;
+      const outletX = pipeX + 45 * scale;
       
       ctx.fillStyle = colors.neonBlue;
       ctx.beginPath();
-      ctx.arc(outletX, floorY, 3, 0, Math.PI * 2);
+      ctx.arc(outletX, floorY, 5 * scale, 0, Math.PI * 2);
       ctx.fill();
       
       const flowProgress = ((time * 3 + floor * 0.1) % 1);
-      const flowX = outletX + flowProgress * 40;
+      const flowX = outletX + flowProgress * 60 * scale;
       ctx.fillStyle = colors.neonBlue;
       ctx.beginPath();
-      ctx.arc(flowX, floorY, 2, 0, Math.PI * 2);
+      ctx.arc(flowX, floorY, 3 * scale, 0, Math.PI * 2);
       ctx.fill();
     }
     
-    const energyX = cx + 120;
-    const energyY = cy - 80;
-    const energyWidth = 100;
-    const energyHeight = 120;
+    const energyX = cx + 180 * scale;
+    const energyY = cy - 120 * scale;
+    const energyWidth = 150 * scale;
+    const energyHeight = 180 * scale;
     
     ctx.fillStyle = 'rgba(10, 22, 40, 0.9)';
     ctx.fillRect(energyX, energyY, energyWidth, energyHeight);
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     ctx.strokeRect(energyX, energyY, energyWidth, energyHeight);
     
     ctx.fillStyle = colors.brightWhite;
-    ctx.font = 'bold 14px sans-serif';
+    ctx.font = `bold ${20 * scale}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('能耗对比', energyX + energyWidth / 2, energyY + 20);
+    ctx.fillText('能耗对比', energyX + energyWidth / 2, energyY + 30 * scale);
     
     ctx.fillStyle = colors.warning;
-    ctx.fillRect(energyX + 20, energyY + 35, energyWidth - 40, 30);
+    ctx.fillRect(energyX + 30 * scale, energyY + 50 * scale, energyWidth - 60 * scale, 45 * scale);
     ctx.fillStyle = '#fff';
-    ctx.font = '12px monospace';
-    ctx.fillText('100%', energyX + energyWidth / 2, energyY + 55);
+    ctx.font = `${16 * scale}px monospace`;
+    ctx.fillText('100%', energyX + energyWidth / 2, energyY + 80 * scale);
     
     const energyProgress = Math.min(1, Math.max(0, (time - 3) / 3));
     const currentEnergy = 100 - energyProgress * 45;
     
     ctx.fillStyle = colors.success;
-    const barHeight = 30 * (currentEnergy / 100);
-    const barY = energyY + 85 - (30 - barHeight);
-    ctx.fillRect(energyX + 20, barY, energyWidth - 40, barHeight);
+    const barHeight = 45 * scale * (currentEnergy / 100);
+    const barY = energyY + 130 * scale - (45 * scale - barHeight);
+    ctx.fillRect(energyX + 30 * scale, barY, energyWidth - 60 * scale, barHeight);
     ctx.fillStyle = '#fff';
-    ctx.fillText(`${Math.round(currentEnergy)}%`, energyX + energyWidth / 2, energyY + 105);
+    ctx.fillText(`${Math.round(currentEnergy)}%`, energyX + energyWidth / 2, energyY + 160 * scale);
     
-    const curveX = cx - 180;
-    const curveY = cy + 100;
-    const curveWidth = 120;
-    const curveHeight = 80;
+    const curveX = cx - 270 * scale;
+    const curveY = cy + 150 * scale;
+    const curveWidth = 180 * scale;
+    const curveHeight = 120 * scale;
     
     ctx.fillStyle = 'rgba(10, 22, 40, 0.9)';
     ctx.fillRect(curveX, curveY, curveWidth, curveHeight);
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     ctx.strokeRect(curveX, curveY, curveWidth, curveHeight);
     
     ctx.fillStyle = colors.brightWhite;
-    ctx.font = 'bold 14px sans-serif';
+    ctx.font = `bold ${20 * scale}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('压力平稳度', curveX + curveWidth / 2, curveY + 20);
+    ctx.fillText('压力平稳度', curveX + curveWidth / 2, curveY + 30 * scale);
     
     ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
-    ctx.fillRect(curveX + 10, curveY + 45, curveWidth - 20, 15);
+    ctx.fillRect(curveX + 15 * scale, curveY + 65 * scale, curveWidth - 30 * scale, 22 * scale);
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(curveX + 10, curveY + 45, curveWidth - 20, 15);
+    ctx.lineWidth = 3 * scale;
+    ctx.strokeRect(curveX + 15 * scale, curveY + 65 * scale, curveWidth - 30 * scale, 22 * scale);
     
     if (time > 10) {
-      const sloganY = cy - 150;
+      const sloganY = cy - 225 * scale;
       const sloganScale = Math.min(1, (time - 10) / 0.5);
       
       ctx.save();
@@ -891,58 +890,58 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.scale(sloganScale, sloganScale);
       
       ctx.fillStyle = 'rgba(10, 22, 40, 0.95)';
-      ctx.fillRect(-200, -30, 400, 60);
+      ctx.fillRect(-300 * scale, -45 * scale, 600 * scale, 90 * scale);
       ctx.strokeStyle = colors.neonBlue;
-      ctx.lineWidth = 3;
-      ctx.strokeRect(-200, -30, 400, 60);
+      ctx.lineWidth = 4 * scale;
+      ctx.strokeRect(-300 * scale, -45 * scale, 600 * scale, 90 * scale);
       
       ctx.fillStyle = colors.neonBlue;
-      ctx.font = 'bold 24px sans-serif';
+      ctx.font = `bold ${34 * scale}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText('DeepControl AIPC', 0, -5);
+      ctx.fillText('DeepControl AIPC', 0, -8 * scale);
       ctx.fillStyle = colors.brightWhite;
-      ctx.font = '16px sans-serif';
-      ctx.fillText('—— "让每一滴水都更聪明"', 0, 20);
+      ctx.font = `${22 * scale}px sans-serif`;
+      ctx.fillText('—— "让每一滴水都更聪明"', 0, 28 * scale);
       
       ctx.restore();
     }
     
-    drawTechIndicator(ctx, cx - 200, cy + 200, '系统响应', '<1s', time);
-    drawTechIndicator(ctx, cx + 50, cy + 200, '节能收益', '45%', time);
+    drawTechIndicator(ctx, cx - 300 * scale, cy + 300 * scale, '系统响应', '<1s', time);
+    drawTechIndicator(ctx, cx + 75 * scale, cy + 300 * scale, '节能收益', '45%', time);
   };
 
   const drawChartBox = (ctx: CanvasRenderingContext2D, x: number, y: number, 
                        width: number, height: number, title: string, 
-                       color: string, time: number, isSmooth: boolean) => {
+                       color: string, time: number, isSmooth: boolean, scale: number) => {
     ctx.fillStyle = 'rgba(10, 22, 40, 0.9)';
     ctx.fillRect(x, y, width, height);
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     ctx.strokeRect(x, y, width, height);
     
     ctx.fillStyle = color;
-    ctx.font = 'bold 12px sans-serif';
+    ctx.font = `bold ${16 * scale}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(title, x + width / 2, y + 20);
+    ctx.fillText(title, x + width / 2, y + 30 * scale);
     
     ctx.beginPath();
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     for (let px = 0; px < width; px++) {
       let py;
       if (isSmooth) {
-        const smooth = Math.sin((px / 20 + time * 1.5) * 0.3) * 15;
+        const smooth = Math.sin((px / 20 + time * 1.5) * 0.3) * 22 * scale;
         py = y + height / 2 + smooth;
         
         if (px > width * 0.7) {
-          ctx.setLineDash([3, 3]);
+          ctx.setLineDash([4 * scale, 4 * scale]);
           ctx.strokeStyle = color + '80';
         } else {
           ctx.setLineDash([]);
           ctx.strokeStyle = color;
         }
       } else {
-        const oscillation = Math.sin((px / 8 + time * 4) * 0.8) * 25 + Math.sin((px / 4 + time * 6) * 1.2) * 10;
+        const oscillation = Math.sin((px / 8 + time * 4) * 0.8) * 35 * scale + Math.sin((px / 4 + time * 6) * 1.2) * 15 * scale;
         py = y + height / 2 + oscillation;
         ctx.setLineDash([]);
         ctx.strokeStyle = color;
@@ -959,16 +958,16 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
   };
 
   const drawChaosFlow = (ctx: CanvasRenderingContext2D, x1: number, y1: number, 
-                        x2: number, y2: number, time: number) => {
+                        x2: number, y2: number, time: number, scale: number) => {
     const segments = 10;
     ctx.beginPath();
     ctx.strokeStyle = colors.neonBlue;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     
     for (let i = 0; i <= segments; i++) {
       const t = i / segments;
       const x = x1 + (x2 - x1) * t;
-      const y = y1 + (y2 - y1) * t + Math.sin(time * 10 + i * 0.5) * 5;
+      const y = y1 + (y2 - y1) * t + Math.sin(time * 10 + i * 0.5) * 8 * scale;
       
       if (i === 0) {
         ctx.moveTo(x, y);
@@ -979,16 +978,16 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
     ctx.stroke();
   };
 
-  const drawCloud = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string) => {
+  const drawCloud = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string, scale: number) => {
     ctx.fillStyle = color + '40';
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3 * scale;
     
     ctx.beginPath();
-    ctx.arc(x, y, 20, 0, Math.PI * 2);
-    ctx.arc(x + 25, y - 5, 15, 0, Math.PI * 2);
-    ctx.arc(x + 45, y, 18, 0, Math.PI * 2);
-    ctx.arc(x + 25, y + 10, 12, 0, Math.PI * 2);
+    ctx.arc(x, y, 30 * scale, 0, Math.PI * 2);
+    ctx.arc(x + 35 * scale, y - 8 * scale, 22 * scale, 0, Math.PI * 2);
+    ctx.arc(x + 65 * scale, y, 27 * scale, 0, Math.PI * 2);
+    ctx.arc(x + 35 * scale, y + 15 * scale, 18 * scale, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   };
