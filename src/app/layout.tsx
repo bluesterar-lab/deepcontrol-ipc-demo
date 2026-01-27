@@ -4,11 +4,11 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: '新应用 | 扣子编程',
-    template: '%s | 扣子编程',
+    default: 'DeepControl AIPC - 智能二次供水优化演示',
+    template: '%s | DeepControl AIPC',
   },
   description:
-    '扣子编程是一款一站式云端 Vibe Coding 开发平台。通过对话轻松构建智能体、工作流和网站，实现从创意到上线的无缝衔接。',
+    '基于MPC模型预测控制的智能供水系统，能耗降低45%，运维成本降低30%。实时监测管网压力与流量，<1s极速响应。',
   keywords: [
     '扣子编程',
     'Coze Code',
