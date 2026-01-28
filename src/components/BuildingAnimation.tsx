@@ -360,10 +360,10 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
 
       // 阶段步骤
       const stages = [
-        { num: 1, title: '压力数据采集', desc: '实时采集水压数据', color: '#3b82f6' },
-        { num: 2, title: '数据上传云端', desc: '4G网络传输', color: '#06b6d4' },
-        { num: 3, title: '智能决策分析', desc: 'MPC算法计算', color: '#8b5cf6' },
-        { num: 4, title: '执行调节指令', desc: '变频泵响应', color: '#22c55e' }
+        { num: 1, title: '压力预测分析', desc: '检测水压不足风险', color: '#3b82f6' },
+        { num: 2, title: '数据上传云端', desc: '上传预测数据', color: '#06b6d4' },
+        { num: 3, title: '云端智能分析', desc: '计算调节方案', color: '#8b5cf6' },
+        { num: 4, title: '执行压力调节', desc: '变频泵恢复压力', color: '#22c55e' }
       ];
 
       stages.forEach((stage, i) => {
@@ -444,6 +444,17 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         // 绘制建筑轮廓
         ctx.strokeRect(buildingX - 50, buildingY - floorHeight * floorCount / 2, 100, floorHeight * floorCount);
 
+        // 预测标识（仅在阶段1显示）
+        if (currentStage === 1) {
+          ctx.fillStyle = '#f97316';
+          ctx.font = 'bold 13px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('⚠️ 水压预测', buildingX, buildingY - floorHeight * floorCount / 2 - 25);
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '11px system-ui, sans-serif';
+          ctx.fillText('检测到即将压力不足', buildingX, buildingY - floorHeight * floorCount / 2 - 10);
+        }
+
         // 绘制楼层
         for (let i = 0; i < floorCount; i++) {
           const floorY = buildingY - floorHeight * floorCount / 2 + i * floorHeight;
@@ -474,30 +485,94 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
 
           // 楼层水压显示（仅在阶段1+显示）
           const floorPressures = [
-            { floor: 5, pressure: 0.45, status: 'normal' },
-            { floor: 4, pressure: 0.43, status: 'normal' },
-            { floor: 3, pressure: 0.42, status: 'normal' },
-            { floor: 2, pressure: 0.41, status: 'normal' },
-            { floor: 1, pressure: 0.40, status: 'normal' }
+            { floor: 5, pressure: 0.42, status: 'warning' },
+            { floor: 4, pressure: 0.41, status: 'warning' },
+            { floor: 3, pressure: 0.40, status: 'normal' },
+            { floor: 2, pressure: 0.39, status: 'normal' },
+            { floor: 1, pressure: 0.38, status: 'normal' }
           ];
 
           const fy = floorY + floorHeight / 2;
           const fp = floorPressures[i];
-          const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.02;
-          const currentPressure = fp.pressure + pressureChange;
 
-          // 水压指示条
-          const barWidth = currentPressure * 80;
-          const barColor = currentPressure > 0.46 ? '#ef4444' : currentPressure < 0.38 ? '#f97316' : '#22c55e';
+          // 基于阶段调整压力值
+          let currentPressure = fp.pressure;
+          let predictedPressure = fp.pressure - 0.02;
 
-          ctx.fillStyle = barColor;
-          ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
+          if (currentStage === 1) {
+            // 阶段1：显示当前压力和预测压力
+            const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.01;
+            currentPressure = fp.pressure + pressureChange;
+            predictedPressure = currentPressure - 0.02;
 
-          // 压力数值
-          ctx.fillStyle = '#ffffff';
-          ctx.font = '10px system-ui, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText(currentPressure.toFixed(3) + ' MPa', buildingX + 35 + barWidth + 5, fy + 4);
+            // 当前压力条
+            const currentBarWidth = currentPressure * 80;
+            const currentBarColor = currentPressure > 0.42 ? '#f97316' : '#22c55e';
+
+            ctx.fillStyle = currentBarColor;
+            ctx.fillRect(buildingX + 35, fy - 12, currentBarWidth, 8);
+
+            // 预测压力条（虚线框）
+            const predictedBarWidth = predictedPressure * 80;
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            ctx.strokeRect(buildingX + 35, fy - 2, predictedBarWidth, 8);
+            ctx.setLineDash([]);
+
+            // 当前压力标签
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '9px system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('当前:', buildingX + 35 + currentBarWidth + 5, fy - 5);
+
+            // 预测压力标签
+            ctx.fillStyle = '#f97316';
+            ctx.fillText('预测:', buildingX + 35 + predictedBarWidth + 5, fy + 5);
+
+            // 预警图标（顶部楼层）
+            if (i === 0) {
+              ctx.fillStyle = '#f97316';
+              ctx.font = '14px system-ui, sans-serif';
+              ctx.fillText('⚠️', buildingX - 40, fy + 4);
+            }
+          } else if (currentStage === 4) {
+            // 阶段4：压力逐渐恢复正常
+            const recoveryProgress = stageProgress;
+            const targetPressure = fp.pressure + 0.03;
+            currentPressure = fp.pressure + (targetPressure - fp.pressure) * recoveryProgress;
+            const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.01;
+            currentPressure += pressureChange;
+
+            // 压力指示条
+            const barWidth = currentPressure * 80;
+            const barColor = currentPressure > 0.42 ? '#22c55e' : '#22c55e';
+
+            ctx.fillStyle = barColor;
+            ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
+
+            // 压力数值
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '10px system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(currentPressure.toFixed(3) + ' MPa', buildingX + 35 + barWidth + 5, fy + 4);
+          } else {
+            // 阶段2、3：保持显示（预警状态）
+            const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.01;
+            currentPressure = fp.pressure + pressureChange;
+
+            const barWidth = currentPressure * 80;
+            const barColor = currentPressure > 0.42 ? '#f97316' : '#22c55e';
+
+            ctx.fillStyle = barColor;
+            ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
+
+            // 压力数值
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '10px system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(currentPressure.toFixed(3) + ' MPa', buildingX + 35 + barWidth + 5, fy + 4);
+          }
         }
 
         // ========== 顶楼（最不利点）压力表和4G模块 ==========
@@ -589,6 +664,53 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
           ctx.fill();
         }
 
+        // 阶段3：显示分析结果
+        if (currentStage >= 3) {
+          // 分析结果框
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(cloudX - 50, cloudY + 55, 100, 50);
+          ctx.strokeStyle = '#8b5cf6';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(cloudX - 50, cloudY + 55, 100, 50);
+
+          // 分析结果标题
+          ctx.fillStyle = '#8b5cf6';
+          ctx.font = 'bold 11px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('分析结果', cloudX, cloudY + 70);
+
+          // 当前压力
+          ctx.fillStyle = '#f97316';
+          ctx.font = '10px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('当前:', cloudX - 40, cloudY + 85);
+          ctx.fillText('0.42 MPa', cloudX - 5, cloudY + 85);
+
+          // 目标压力
+          ctx.fillStyle = '#22c55e';
+          ctx.fillText('目标:', cloudX - 40, cloudY + 98);
+          ctx.fillText('0.45 MPa', cloudX - 5, cloudY + 98);
+
+          // 箭头指向边缘控制器
+          if (currentStage === 3) {
+            ctx.beginPath();
+            ctx.moveTo(cloudX + 50, cloudY + 80);
+            ctx.lineTo(cloudX + 80, cloudY + 80);
+            ctx.strokeStyle = '#8b5cf6';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 2]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.beginPath();
+            ctx.moveTo(cloudX + 80, cloudY + 77);
+            ctx.lineTo(cloudX + 83, cloudY + 80);
+            ctx.lineTo(cloudX + 80, cloudY + 83);
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fill();
+          }
+        }
+
         // 标注：传输链路1
         ctx.fillStyle = '#94a3b8';
         ctx.font = '11px system-ui, sans-serif';
@@ -667,14 +789,33 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
 
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(pumpX - 30, pumpMotorY - 20, 60, 40);
-        ctx.strokeStyle = '#22c55e';
+        ctx.strokeStyle = currentStage === 4 ? '#f97316' : '#22c55e';
         ctx.lineWidth = 2;
         ctx.strokeRect(pumpX - 30, pumpMotorY - 20, 60, 40);
 
-        ctx.fillStyle = '#22c55e';
+        ctx.fillStyle = currentStage === 4 ? '#f97316' : '#22c55e';
         ctx.font = 'bold 12px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('变频泵', pumpX, pumpMotorY + 5);
+
+        // 阶段4：显示调节过程
+        if (currentStage === 4) {
+          // 调节进度条
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(pumpX - 25, pumpMotorY + 12, 50, 6);
+          ctx.fillStyle = '#f97316';
+          const adjustWidth = 50 * stageProgress;
+          ctx.fillRect(pumpX - 25, pumpMotorY + 12, adjustWidth, 6);
+
+          // 调节文本
+          ctx.fillStyle = '#f97316';
+          ctx.font = '10px system-ui, sans-serif';
+          ctx.fillText('正在调节...', pumpX, pumpMotorY + 30);
+
+          // 目标压力显示
+          ctx.fillStyle = '#22c55e';
+          ctx.fillText('目标: 0.45 MPa', pumpX, pumpMotorY + 42);
+        }
 
         // 控制线
         const controlSignal = (time * 4) % 1;
