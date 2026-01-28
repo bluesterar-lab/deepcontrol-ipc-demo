@@ -1,6 +1,5 @@
 {
   "buildCommand": "pnpm run build",
-  "outputDirectory": "out",
   "framework": "nextjs",
   "regions": ["sin1"],
   "headers": [
