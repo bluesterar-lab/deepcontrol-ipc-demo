@@ -1,6 +1,15 @@
 {
-  "buildCommand": "pnpm run build",
-  "framework": "nextjs",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "out"
+      }
+    }
+  ],
+  "outputDirectory": "out",
   "regions": ["sin1"],
   "headers": [
     {
