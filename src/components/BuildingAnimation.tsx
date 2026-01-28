@@ -333,57 +333,151 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const currentStage = Math.floor(cycleTime / 2) + 1; // 1-4阶段
       const stageProgress = (cycleTime % 2) / 2; // 0-1，当前阶段的进度
 
+      // 标题
       ctx.fillStyle = '#22c55e';
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('全感知检测与硬件部署方案', centerX, 35);
+      ctx.fillText('全感知检测与硬件部署方案', centerX - 80, 35);
 
-      // ========== 左侧：建筑剖面图 ==========
-      const buildingX = centerX - 200;
-      const buildingY = centerY;
-      const floorHeight = 40;
-      const floorCount = 5;
-      
+      // ========== 右侧：阶段信息面板 ==========
+      const panelX = centerX + 100;
+      const panelY = centerY - 120;
+      const panelWidth = 180;
+      const panelHeight = 240;
+
+      // 面板背景
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
       ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 3;
-      
-      // 绘制建筑轮廓
-      ctx.strokeRect(buildingX - 50, buildingY - floorHeight * floorCount / 2, 100, floorHeight * floorCount);
-      
-      // 绘制楼层
-      for (let i = 0; i < floorCount; i++) {
-        const floorY = buildingY - floorHeight * floorCount / 2 + i * floorHeight;
-        
-        // 楼板
+      ctx.lineWidth = 2;
+      ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
+
+      // 面板标题
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 14px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('执行流程', panelX + panelWidth / 2, panelY + 25);
+
+      // 阶段步骤
+      const stages = [
+        { num: 1, title: '压力数据采集', desc: '实时采集水压数据', color: '#3b82f6' },
+        { num: 2, title: '数据上传云端', desc: '4G网络传输', color: '#06b6d4' },
+        { num: 3, title: '智能决策分析', desc: 'MPC算法计算', color: '#8b5cf6' },
+        { num: 4, title: '执行调节指令', desc: '变频泵响应', color: '#22c55e' }
+      ];
+
+      stages.forEach((stage, i) => {
+        const stageNum = i + 1;
+        const isActive = stageNum === currentStage;
+        const isCompleted = stageNum < currentStage;
+        const shouldShow = stageNum <= currentStage; // 累加显示
+
+        if (!shouldShow) return;
+
+        const sy = panelY + 50 + i * 50;
+
+        // 步骤圆圈
         ctx.beginPath();
-        ctx.moveTo(buildingX - 50, floorY);
-        ctx.lineTo(buildingX + 50, floorY);
-        ctx.strokeStyle = '#64748b';
+        ctx.arc(panelX + 25, sy + 15, 12, 0, Math.PI * 2);
+        ctx.fillStyle = isActive ? stage.color : isCompleted ? '#475569' : '#1e293b';
+        ctx.fill();
+        ctx.strokeStyle = stage.color;
         ctx.lineWidth = 2;
         ctx.stroke();
-        
-        // 楼层标签
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '12px system-ui, sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText(`${floorCount - i}楼`, buildingX - 55, floorY + floorHeight / 2 + 4);
-        
-        // 管道
-        if (i < floorCount - 1) {
+
+        // 当前步骤脉冲效果
+        if (isActive) {
+          const pulseSize = 12 + Math.sin(time * 8) * 3;
           ctx.beginPath();
-          ctx.moveTo(buildingX + 30, floorY + 5);
-          ctx.lineTo(buildingX + 30, floorY + floorHeight);
-          ctx.strokeStyle = '#38bdf8';
-          ctx.lineWidth = 3;
+          ctx.arc(panelX + 25, sy + 15, pulseSize, 0, Math.PI * 2);
+          ctx.strokeStyle = stage.color;
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.5;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+
+        // 步骤序号
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(stage.num), panelX + 25, sy + 19);
+
+        // 步骤标题
+        ctx.fillStyle = isActive ? stage.color : '#ffffff';
+        ctx.font = isActive ? 'bold 13px system-ui, sans-serif' : '13px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(stage.title, panelX + 50, sy + 12);
+
+        // 步骤描述
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.fillText(stage.desc, panelX + 50, sy + 30);
+
+        // 连接线
+        if (i < stages.length - 1 && shouldShow) {
+          ctx.beginPath();
+          ctx.moveTo(panelX + 25, sy + 27);
+          ctx.lineTo(panelX + 25, panelY + 50 + (i + 1) * 50 - 13);
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 2;
           ctx.stroke();
         }
-      }
+      });
 
-      // ========== 顶楼（最不利点）压力表和4G模块 ==========
-      const topFloorY = buildingY - floorHeight * floorCount / 2;
-      
-      // 压力表
-      ctx.fillStyle = '#1e293b';
+      // ========== 左侧：主图像区域 ==========
+      const imageCenterX = centerX - 140;
+      const imageCenterY = centerY;
+
+      // ========== 建筑剖面图（阶段1+显示）==========
+      if (currentStage >= 1) {
+        const buildingX = imageCenterX - 100;
+        const buildingY = imageCenterY;
+        const floorHeight = 40;
+        const floorCount = 5;
+        const buildingAlpha = currentStage === 1 ? 1 : 0.7;
+
+        ctx.globalAlpha = alpha * buildingAlpha;
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 3;
+
+        // 绘制建筑轮廓
+        ctx.strokeRect(buildingX - 50, buildingY - floorHeight * floorCount / 2, 100, floorHeight * floorCount);
+
+        // 绘制楼层
+        for (let i = 0; i < floorCount; i++) {
+          const floorY = buildingY - floorHeight * floorCount / 2 + i * floorHeight;
+
+          // 楼板
+          ctx.beginPath();
+          ctx.moveTo(buildingX - 50, floorY);
+          ctx.lineTo(buildingX + 50, floorY);
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // 楼层标签
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '12px system-ui, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(`${floorCount - i}楼`, buildingX - 55, floorY + floorHeight / 2 + 4);
+
+          // 管道
+          if (i < floorCount - 1) {
+            ctx.beginPath();
+            ctx.moveTo(buildingX + 30, floorY + 5);
+            ctx.lineTo(buildingX + 30, floorY + floorHeight);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+          }
+        }
+
+        // ========== 顶楼（最不利点）压力表和4G模块 ==========
+        const topFloorY = buildingY - floorHeight * floorCount / 2;
+
+        // 压力表
+        ctx.fillStyle = '#1e293b';
       ctx.fillRect(buildingX + 10, topFloorY + 10, 30, 25);
       ctx.strokeStyle = '#22c55e';
       ctx.lineWidth = 2;
@@ -414,373 +508,269 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.font = '9px system-ui, sans-serif';
       ctx.fillText('4G', buildingX + 25, topFloorY - 15);
       
-      // 标注：最不利点
-      ctx.fillStyle = '#ef4444';
-      ctx.font = 'bold 11px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('最不利点', buildingX + 25, topFloorY + 55);
-      ctx.font = '10px system-ui, sans-serif';
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText('压力表+4G', buildingX + 25, topFloorY + 68);
-
-      // ========== 中间：云端服务器 ==========
-      const cloudX = centerX;
-      const cloudY = centerY - 60;
-      
-      // 云端图标
-      ctx.beginPath();
-      ctx.arc(cloudX - 20, cloudY, 20, 0, Math.PI * 2);
-      ctx.arc(cloudX + 20, cloudY, 20, 0, Math.PI * 2);
-      ctx.arc(cloudX, cloudY - 15, 25, 0, Math.PI * 2);
-      ctx.fillStyle = '#06b6d4';
-      ctx.fill();
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '14px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('☁️', cloudX, cloudY + 5);
-      
-      ctx.fillStyle = '#06b6d4';
-      ctx.font = 'bold 14px system-ui, sans-serif';
-      ctx.fillText('云端平台', cloudX, cloudY + 40);
-      
-      // 数据流动画到云端（仅在阶段1-3显示，与流程步骤同步）
-      const dataToCloud = (time * 3) % 1;
-      const toCloudX = buildingX + 25 + (cloudX - buildingX - 25) * dataToCloud;
-      const toCloudY = topFloorY - 18 + (cloudY - topFloorY + 18) * dataToCloud;
-      
-      // 根据阶段控制数据流显示
-      const showDataFlow = currentStage <= 3;
-      if (showDataFlow) {
-        ctx.beginPath();
-        ctx.arc(toCloudX, toCloudY, 6, 0, Math.PI * 2);
-        ctx.fillStyle = currentStage === 1 ? '#3b82f6' : currentStage === 2 ? '#06b6d4' : '#8b5cf6';
-        ctx.fill();
-      }
-      
-      // 标注：传输链路1
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '11px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('4G上传', centerX - 80, centerY - 85);
-
-      // ========== 右侧：泵房边缘控制器 ==========
-      const pumpX = centerX + 180;
-      const pumpY = centerY + 20;
-      
-      // 边缘控制器盒子
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(pumpX - 40, pumpY - 30, 80, 60);
-      ctx.strokeStyle = '#8b5cf6';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(pumpX - 40, pumpY - 30, 80, 60);
-      
-      ctx.fillStyle = '#8b5cf6';
-      ctx.font = 'bold 12px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('边缘', pumpX, pumpY - 10);
-      ctx.fillText('控制器', pumpX, pumpY + 8);
-      
-      // 智能盒子图标
-      const boxPulse = 1 + Math.sin(time * 3) * 0.1;
-      ctx.save();
-      ctx.translate(pumpX, pumpY + 25);
-      ctx.scale(boxPulse, boxPulse);
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(-15, -10, 30, 20);
-      ctx.restore();
-      
-      // 数据流动画到边缘控制器（仅在阶段3-4显示）
-      const dataToPump = (time * 3 + 0.5) % 1;
-      const toPumpX = cloudX + (pumpX - cloudX) * dataToPump;
-      const toPumpY = cloudY + (pumpY - cloudY) * dataToPump;
-      
-      // 根据阶段控制数据流显示
-      const showDecisionFlow = currentStage >= 3;
-      if (showDecisionFlow) {
-        ctx.beginPath();
-        ctx.arc(toPumpX, toPumpY, 6, 0, Math.PI * 2);
-        ctx.fillStyle = currentStage === 3 ? '#8b5cf6' : '#22c55e';
-        ctx.fill();
-      }
-      
-      // 标注：传输链路2
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '11px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('4G下载', centerX + 90, centerY - 20);
-
-      // ========== 变频泵 ==========
-      const pumpMotorY = pumpY + 80;
-      
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(pumpX - 30, pumpMotorY - 20, 60, 40);
-      ctx.strokeStyle = '#22c55e';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(pumpX - 30, pumpMotorY - 20, 60, 40);
-      
-      ctx.fillStyle = '#22c55e';
-      ctx.font = 'bold 12px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('变频泵', pumpX, pumpMotorY + 5);
-      
-      // 控制线
-      const controlSignal = (time * 4) % 1;
-      const signalY = pumpY + 30 + controlSignal * 30;
-      
-      ctx.beginPath();
-      ctx.moveTo(pumpX, pumpY + 30);
-      ctx.lineTo(pumpX, pumpMotorY - 20);
-      ctx.strokeStyle = '#22c55e';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      
-      ctx.beginPath();
-      ctx.arc(pumpX, signalY, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#22c55e';
-      ctx.fill();
-
-      // ========== 闭环流程：水泵→楼内水压→传感器 ==========
-      // 从变频泵到建筑的主管道
-      const pipeStartX = pumpX - 30;
-      const pipeStartY = pumpMotorY;
-      const pipeEndX = buildingX + 30;
-      const pipeEndY = buildingY + floorHeight * floorCount / 2 - 10;
-
-      // 主管道（供水）
-      ctx.beginPath();
-      ctx.moveTo(pipeStartX, pipeStartY);
-      ctx.lineTo(pipeStartX, pipeStartY + 30);
-      ctx.lineTo(buildingX + 30, buildingY + floorHeight * floorCount / 2 - 10);
-      ctx.lineTo(buildingX + 30, topFloorY);
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 6;
-      ctx.stroke();
-
-      // 水流动画（泵到楼内）
-      const waterFlow = (time * 5) % 1;
-      const flowX = pipeStartX + (pipeEndX - pipeStartX) * waterFlow * 0.3;
-      const flowY = pipeStartY + (buildingY + floorHeight * floorCount / 2 - 10 - pipeStartY) * waterFlow;
-      
-      ctx.beginPath();
-      ctx.arc(flowX, flowY, 5, 0, Math.PI * 2);
-      ctx.fillStyle = '#60a5fa';
-      ctx.fill();
-
-      // 楼内各楼层水压状态
-      const floorPressures = [
-        { floor: 5, pressure: 0.45, status: 'normal' },
-        { floor: 4, pressure: 0.43, status: 'normal' },
-        { floor: 3, pressure: 0.42, status: 'normal' },
-        { floor: 2, pressure: 0.41, status: 'normal' },
-        { floor: 1, pressure: 0.40, status: 'normal' }
-      ];
-
-      floorPressures.forEach((fp, i) => {
-        const fy = buildingY - floorHeight * floorCount / 2 + i * floorHeight + floorHeight / 2;
-        const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.02;
-        const currentPressure = fp.pressure + pressureChange;
-        
-        // 水压指示条
-        const barWidth = currentPressure * 80;
-        const barColor = currentPressure > 0.46 ? '#ef4444' : currentPressure < 0.38 ? '#f97316' : '#22c55e';
-        
-        ctx.fillStyle = barColor;
-        ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
-        
-        // 压力数值
-        ctx.fillStyle = '#ffffff';
+        // 标注：最不利点
+        ctx.fillStyle = '#ef4444';
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('最不利点', buildingX + 25, topFloorY + 55);
         ctx.font = '10px system-ui, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(currentPressure.toFixed(3) + ' MPa', buildingX + 35 + barWidth + 5, fy + 4);
-      });
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('压力表+4G', buildingX + 25, topFloorY + 68);
+        ctx.globalAlpha = alpha;
+      }
 
-      // 标注：供水管道
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 11px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('供水管道', (pumpX + buildingX) / 2 - 30, buildingY + floorHeight * floorCount / 2 + 20);
+      // ========== 中间：云端服务器（阶段2+显示）==========
+      if (currentStage >= 2) {
+        const cloudX = imageCenterX + 60;
+        const cloudY = imageCenterY - 60;
+        const cloudAlpha = currentStage === 2 ? 1 : 0.7;
 
-      // ========== 闭环反馈线（从楼内到泵房）==========
-      // 虚线表示反馈信号
-      ctx.beginPath();
-      ctx.moveTo(buildingX + 25, topFloorY - 18);
-      ctx.lineTo(buildingX + 25, pumpMotorY);
-      ctx.lineTo(pumpX, pumpMotorY);
-      ctx.strokeStyle = '#8b5cf6';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      ctx.stroke();
-      ctx.setLineDash([]);
+        ctx.globalAlpha = alpha * cloudAlpha;
 
-      // 反馈信号动画（仅在阶段4显示）
-      const showFeedback = currentStage === 4;
-      if (showFeedback) {
-        const feedbackFlow = (time * 3 + 0.3) % 1;
-        const feedbackX = buildingX + 25 + (pumpX - buildingX - 25) * feedbackFlow;
-        const feedbackY = topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5;
-        
-        if (feedbackFlow > 0.5) {
-          const secondPhase = (feedbackFlow - 0.5) * 2;
-          const finalX = buildingX + 25;
-          const finalY = pumpMotorY + secondPhase * (buildingX + 25 - pumpX);
-        }
-        
+        // 云端图标
         ctx.beginPath();
-        ctx.arc(buildingX + 25, topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5, 4, 0, Math.PI * 2);
+        ctx.arc(cloudX - 20, cloudY, 20, 0, Math.PI * 2);
+        ctx.arc(cloudX + 20, cloudY, 20, 0, Math.PI * 2);
+        ctx.arc(cloudX, cloudY - 15, 25, 0, Math.PI * 2);
+        ctx.fillStyle = '#06b6d4';
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('☁️', cloudX, cloudY + 5);
+
+        ctx.fillStyle = '#06b6d4';
+        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.fillText('云端平台', cloudX, cloudY + 40);
+
+        // 数据流动画到云端
+        if (currentStage >= 2) {
+          const buildingX = imageCenterX - 100;
+          const buildingY = imageCenterY;
+          const floorHeight = 40;
+          const floorCount = 5;
+          const topFloorY = buildingY - floorHeight * floorCount / 2;
+
+          const dataToCloud = (time * 3) % 1;
+          const toCloudX = buildingX + 25 + (cloudX - buildingX - 25) * dataToCloud;
+          const toCloudY = topFloorY - 18 + (cloudY - topFloorY + 18) * dataToCloud;
+
+          ctx.beginPath();
+          ctx.arc(toCloudX, toCloudY, 6, 0, Math.PI * 2);
+          ctx.fillStyle = currentStage === 2 ? '#06b6d4' : '#8b5cf6';
+          ctx.fill();
+        }
+
+        // 标注：传输链路1
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('4G上传', imageCenterX - 20, imageCenterY - 85);
+
+        ctx.globalAlpha = alpha;
+      }
+
+      // ========== 右侧：泵房边缘控制器（阶段3+显示）==========
+      if (currentStage >= 3) {
+        const pumpX = imageCenterX + 160;
+        const pumpY = imageCenterY + 20;
+        const pumpAlpha = currentStage === 3 ? 1 : 0.7;
+
+        ctx.globalAlpha = alpha * pumpAlpha;
+
+        // 边缘控制器盒子
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(pumpX - 40, pumpY - 30, 80, 60);
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(pumpX - 40, pumpY - 30, 80, 60);
+
+        ctx.fillStyle = '#8b5cf6';
+        ctx.font = 'bold 12px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('边缘', pumpX, pumpY - 10);
+        ctx.fillText('控制器', pumpX, pumpY + 8);
+
+        // 智能盒子图标
+        const boxPulse = 1 + Math.sin(time * 3) * 0.1;
+        ctx.save();
+        ctx.translate(pumpX, pumpY + 25);
+        ctx.scale(boxPulse, boxPulse);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(-15, -10, 30, 20);
+        ctx.restore();
+
+        // 数据流动画到边缘控制器
+        if (currentStage >= 3) {
+          const cloudX = imageCenterX + 60;
+          const cloudY = imageCenterY - 60;
+
+          const dataToPump = (time * 3 + 0.5) % 1;
+          const toPumpX = cloudX + (pumpX - cloudX) * dataToPump;
+          const toPumpY = cloudY + (pumpY - cloudY) * dataToPump;
+
+          ctx.beginPath();
+          ctx.arc(toPumpX, toPumpY, 6, 0, Math.PI * 2);
+          ctx.fillStyle = currentStage === 3 ? '#8b5cf6' : '#22c55e';
+          ctx.fill();
+        }
+
+        // 标注：传输链路2
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('4G下载', imageCenterX + 110, imageCenterY - 20);
+
+        ctx.globalAlpha = alpha;
+      }
+
+      // ========== 变频泵（阶段4显示）==========
+      if (currentStage >= 4) {
+        const pumpX = imageCenterX + 160;
+        const pumpY = imageCenterY + 20;
+        const pumpMotorY = pumpY + 80;
+
+        // 重新定义建筑变量（因为它们在建筑的if块内部）
+        const buildingX = imageCenterX - 100;
+        const buildingY = imageCenterY;
+        const floorHeight = 40;
+        const floorCount = 5;
+        const topFloorY = buildingY - floorHeight * floorCount / 2;
+
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(pumpX - 30, pumpMotorY - 20, 60, 40);
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(pumpX - 30, pumpMotorY - 20, 60, 40);
+
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 12px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('变频泵', pumpX, pumpMotorY + 5);
+
+        // 控制线
+        const controlSignal = (time * 4) % 1;
+        const signalY = pumpY + 30 + controlSignal * 30;
+
+        ctx.beginPath();
+        ctx.moveTo(pumpX, pumpY + 30);
+        ctx.lineTo(pumpX, pumpMotorY - 20);
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.arc(pumpX, signalY, 4, 0, Math.PI * 2);
         ctx.fillStyle = '#22c55e';
         ctx.fill();
-      }
 
-      // 标注：闭环反馈
-      ctx.fillStyle = '#8b5cf6';
-      ctx.font = 'bold 11px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('闭环反馈', (buildingX + pumpX) / 2, pumpMotorY - 10);
+        // ========== 闭环流程：水泵→楼内水压→传感器 ==========
+        // 从变频泵到建筑的主管道
+        const pipeStartX = pumpX - 30;
+        const pipeStartY = pumpMotorY;
+        const pipeEndX = buildingX + 30;
+        const pipeEndY = buildingY + floorHeight * floorCount / 2 - 10;
 
-      // ========== 工作流程说明（分阶段动画）==========
-      const stageTitles = [
-        '',
-        '第1阶段：压力数据采集',
-        '第2阶段：数据上传云端',
-        '第3阶段：智能决策分析',
-        '第4阶段：执行调节指令'
-      ];
-
-      const processSteps = [
-        { step: 1, text: '压力表采集', x: centerX - 150, y: centerY + 140, color: '#3b82f6' },
-        { step: 2, text: '4G上传云端', x: centerX - 50, y: centerY + 140, color: '#06b6d4' },
-        { step: 3, text: '边缘控制决策', x: centerX + 50, y: centerY + 140, color: '#8b5cf6' },
-        { step: 4, text: '变频泵调节', x: centerX + 150, y: centerY + 140, color: '#22c55e' }
-      ];
-
-      // 绘制当前阶段标题
-      if (stageTitles[currentStage]) {
-        ctx.fillStyle = processSteps[currentStage - 1].color;
-        ctx.font = 'bold 14px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(stageTitles[currentStage], centerX, centerY + 105);
-      }
-
-      processSteps.forEach((ps, i) => {
-        const stepNum = i + 1;
-        const isActive = stepNum === currentStage;
-        const isCompleted = stepNum < currentStage;
-        
-        // 计算透明度：当前步骤1，已完成0.6，未完成0.3
-        let alpha = 0.3;
-        if (isActive) alpha = 1;
-        else if (isCompleted) alpha = 0.6;
-        
-        ctx.globalAlpha = alpha;
-        
+        // 主管道（供水）
         ctx.beginPath();
-        ctx.arc(ps.x, ps.y, 12, 0, Math.PI * 2);
-        ctx.fillStyle = isActive ? ps.color : '#1e293b';
-        ctx.fill();
-        
-        // 当前步骤添加脉冲动画效果
-        if (isActive) {
-          const pulseSize = 12 + Math.sin(time * 8) * 3;
-          ctx.beginPath();
-          ctx.arc(ps.x, ps.y, pulseSize, 0, Math.PI * 2);
-          ctx.strokeStyle = ps.color;
-          ctx.lineWidth = 2;
-          ctx.globalAlpha = 0.5;
-          ctx.stroke();
-          ctx.globalAlpha = alpha;
-        } else {
-          ctx.strokeStyle = ps.color;
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(String(ps.step), ps.x, ps.y + 4);
-        
-        ctx.fillStyle = isActive ? ps.color : '#94a3b8';
-        ctx.font = isActive ? 'bold 12px system-ui, sans-serif' : '11px system-ui, sans-serif';
-        ctx.fillText(ps.text, ps.x, ps.y + 28);
-        
-        ctx.globalAlpha = 1;
-      });
-
-      // ========== 流程进度条 ==========
-      const progressBarY = centerY + 185;
-      const progressBarWidth = 340;
-      const progressBarX = centerX - 170;
-      const progressSegmentWidth = progressBarWidth / 4;
-      
-      // 进度条背景
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(progressBarX, progressBarY, progressBarWidth, 6);
-      
-      // 绘制进度段
-      for (let i = 0; i < 4; i++) {
-        const segX = progressBarX + i * progressSegmentWidth;
-        const isCurrentStage = (i + 1) === currentStage;
-        const isCompletedStage = (i + 1) < currentStage;
-        
-        // 进度段颜色
-        if (isCurrentStage) {
-          // 当前阶段：显示填充动画
-          const fillWidth = progressSegmentWidth * stageProgress;
-          ctx.fillStyle = processSteps[i].color;
-          ctx.fillRect(segX, progressBarY, fillWidth, 6);
-        } else if (isCompletedStage) {
-          // 已完成阶段：完全填充
-          ctx.fillStyle = processSteps[i].color;
-          ctx.fillRect(segX, progressBarY, progressSegmentWidth, 6);
-        } else {
-          // 未开始阶段：不填充
-        }
-        
-        // 分隔线
-        if (i > 0) {
-          ctx.beginPath();
-          ctx.moveTo(segX, progressBarY);
-          ctx.lineTo(segX, progressBarY + 6);
-          ctx.strokeStyle = '#334155';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      }
-
-      // 流程箭头
-      for (let i = 0; i < 3; i++) {
-        const arrowX = processSteps[i].x + 20;
-        ctx.beginPath();
-        ctx.moveTo(arrowX, centerY + 140);
-        ctx.lineTo(arrowX + 10, centerY + 140);
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = 2;
+        ctx.moveTo(pipeStartX, pipeStartY);
+        ctx.lineTo(pipeStartX, pipeStartY + 30);
+        ctx.lineTo(buildingX + 30, buildingY + floorHeight * floorCount / 2 - 10);
+        ctx.lineTo(buildingX + 30, topFloorY);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 6;
         ctx.stroke();
-        
+
+        // 水流动画（泵到楼内）
+        const waterFlow = (time * 5) % 1;
+        const flowX = pipeStartX + (pipeEndX - pipeStartX) * waterFlow * 0.3;
+        const flowY = pipeStartY + (buildingY + floorHeight * floorCount / 2 - 10 - pipeStartY) * waterFlow;
+
         ctx.beginPath();
-        ctx.moveTo(arrowX + 10, centerY + 140 - 3);
-        ctx.lineTo(arrowX + 13, centerY + 140);
-        ctx.lineTo(arrowX + 10, centerY + 140 + 3);
-        ctx.fillStyle = '#475569';
+        ctx.arc(flowX, flowY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#60a5fa';
         ctx.fill();
+
+        // 楼内各楼层水压状态
+        const floorPressures = [
+          { floor: 5, pressure: 0.45, status: 'normal' },
+          { floor: 4, pressure: 0.43, status: 'normal' },
+          { floor: 3, pressure: 0.42, status: 'normal' },
+          { floor: 2, pressure: 0.41, status: 'normal' },
+          { floor: 1, pressure: 0.40, status: 'normal' }
+        ];
+
+        floorPressures.forEach((fp, i) => {
+          const fy = buildingY - floorHeight * floorCount / 2 + i * floorHeight + floorHeight / 2;
+          const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.02;
+          const currentPressure = fp.pressure + pressureChange;
+
+          // 水压指示条
+          const barWidth = currentPressure * 80;
+          const barColor = currentPressure > 0.46 ? '#ef4444' : currentPressure < 0.38 ? '#f97316' : '#22c55e';
+
+          ctx.fillStyle = barColor;
+          ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
+
+          // 压力数值
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '10px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(currentPressure.toFixed(3) + ' MPa', buildingX + 35 + barWidth + 5, fy + 4);
+        });
+
+        // 标注：供水管道
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('供水管道', (pumpX + buildingX) / 2 - 30, buildingY + floorHeight * floorCount / 2 + 20);
+
+        // ========== 闭环反馈线（从楼内到泵房）==========
+        // 虚线表示反馈信号
+        ctx.beginPath();
+        ctx.moveTo(buildingX + 25, topFloorY - 18);
+        ctx.lineTo(buildingX + 25, pumpMotorY);
+        ctx.lineTo(pumpX, pumpMotorY);
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 反馈信号动画（仅在阶段4显示）
+        const showFeedback = currentStage === 4;
+        if (showFeedback) {
+          const feedbackFlow = (time * 3 + 0.3) % 1;
+          const feedbackX = buildingX + 25 + (pumpX - buildingX - 25) * feedbackFlow;
+          const feedbackY = topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5;
+
+          if (feedbackFlow > 0.5) {
+            const secondPhase = (feedbackFlow - 0.5) * 2;
+            const finalX = buildingX + 25;
+            const finalY = pumpMotorY + secondPhase * (buildingX + 25 - pumpX);
+          }
+
+          ctx.beginPath();
+          ctx.arc(buildingX + 25, topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5, 4, 0, Math.PI * 2);
+          ctx.fillStyle = '#22c55e';
+          ctx.fill();
+        }
+
+        // 标注：闭环反馈
+        ctx.fillStyle = '#8b5cf6';
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('闭环反馈', (buildingX + pumpX) / 2, pumpMotorY - 10);
+
+        ctx.globalAlpha = alpha;
       }
 
-      // 闭环箭头（从步骤4回到步骤1）
-      ctx.beginPath();
-      ctx.moveTo(processSteps[3].x, centerY + 165);
-      ctx.lineTo(processSteps[3].x, centerY + 185);
-      ctx.lineTo(processSteps[0].x, centerY + 185);
-      ctx.lineTo(processSteps[0].x, centerY + 165);
-      ctx.strokeStyle = '#8b5cf6';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([3, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.globalAlpha = alpha;
 
-      // ========== 关键指标 ==========
+      // ========== 底部关键指标 ==========
       const metrics = [
         { label: '采样周期', value: '50ms' },
         { label: '传输延迟', value: '<100ms' },
@@ -788,9 +778,9 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ];
 
       metrics.forEach((metric, i) => {
-        const mx = centerX - 120 + i * 120;
+        const mx = imageCenterX - 120 + i * 120;
         const my = height - 35;
-        
+
         ctx.fillStyle = '#475569';
         ctx.font = '11px system-ui, sans-serif';
         ctx.textAlign = 'center';
