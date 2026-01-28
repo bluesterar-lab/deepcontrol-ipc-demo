@@ -340,7 +340,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillText('全感知检测与硬件部署方案', centerX - 60, 35);
 
       // ========== 右侧：阶段信息面板 ==========
-      const panelX = centerX + 100;
+      const panelX = centerX + 120;
       const panelY = centerY - 120;
       const panelWidth = 180;
       const panelHeight = 240;
@@ -426,12 +426,12 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       });
 
       // ========== 左侧：主图像区域 ==========
-      const imageCenterX = centerX - 180;
+      const imageCenterX = centerX - 220;
       const imageCenterY = centerY;
 
       // ========== 建筑剖面图（阶段1+显示）==========
       if (currentStage >= 1) {
-        const buildingX = imageCenterX - 100;
+        const buildingX = imageCenterX - 80;
         const buildingY = imageCenterY;
         const floorHeight = 40;
         const floorCount = 5;
@@ -623,7 +623,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
 
       // ========== 中间：云端服务器（阶段2+显示）==========
       if (currentStage >= 2) {
-        const cloudX = imageCenterX + 60;
+        const cloudX = imageCenterX + 40;
         const cloudY = imageCenterY - 60;
         const cloudAlpha = currentStage === 2 ? 1 : 0.7;
 
@@ -648,7 +648,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
 
         // 数据流动画到云端
         if (currentStage >= 2) {
-          const buildingX = imageCenterX - 100;
+          const buildingX = imageCenterX - 80;
           const buildingY = imageCenterY;
           const floorHeight = 40;
           const floorCount = 5;
@@ -715,14 +715,14 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillStyle = '#94a3b8';
         ctx.font = '11px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('4G上传', imageCenterX - 20, imageCenterY - 85);
+        ctx.fillText('4G上传', imageCenterX - 40, imageCenterY - 85);
 
         ctx.globalAlpha = alpha;
       }
 
       // ========== 右侧：泵房边缘控制器（阶段3+显示）==========
       if (currentStage >= 3) {
-        const pumpX = imageCenterX + 160;
+        const pumpX = imageCenterX + 140;
         const pumpY = imageCenterY + 20;
         const pumpAlpha = currentStage === 3 ? 1 : 0.7;
 
@@ -769,19 +769,19 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.fillStyle = '#94a3b8';
         ctx.font = '11px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('4G下载', imageCenterX + 110, imageCenterY - 20);
+        ctx.fillText('4G下载', imageCenterX + 90, imageCenterY - 20);
 
         ctx.globalAlpha = alpha;
       }
 
       // ========== 变频泵（阶段4显示）==========
       if (currentStage >= 4) {
-        const pumpX = imageCenterX + 160;
+        const pumpX = imageCenterX + 140;
         const pumpY = imageCenterY + 20;
         const pumpMotorY = pumpY + 80;
 
         // 重新定义建筑变量（因为它们在建筑的if块内部）
-        const buildingX = imageCenterX - 100;
+        const buildingX = imageCenterX - 80;
         const buildingY = imageCenterY;
         const floorHeight = 40;
         const floorCount = 5;
@@ -1216,7 +1216,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       });
 
       // ========== 左侧：优化前后对比表格 ==========
-      const tableX = centerX - 260;
+      const tableX = centerX - 300;
       const tableY = centerY - 30;
       const tableWidth = 240;
       const rowHeight = 30;
@@ -1277,7 +1277,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillText('优化前后对比', tableX + tableWidth / 2, tableY - 10);
 
       // ========== 右侧：柱状图展示 ==========
-      const chartX = centerX + 20;
+      const chartX = centerX - 20;
       const chartY = centerY - 30;
       const chartWidth = 240;
       const chartHeight = 180;
@@ -1349,7 +1349,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillText('不同时段用水需求与自动调节', centerX, 35);
 
       // ========== 左侧：不同时段用水需求曲线 ==========
-      const chartX = centerX - 220;
+      const chartX = centerX - 260;
       const chartY = centerY - 80;
       const chartWidth = 200;
       const chartHeight = 180;
@@ -1453,7 +1453,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         { period: '休息期', time: '21-24时', demand: '低', color: '#64748b', pressure: '0.38 MPa' }
       ];
 
-      const periodX = centerX + 20;
+      const periodX = centerX - 20;
       const periodY = chartY;
 
       ctx.fillStyle = '#ffffff';
@@ -1481,7 +1481,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       });
 
       // ========== 右侧：自动调节流程图 ==========
-      const flowX = periodX + 160;
+      const flowX = periodX + 120;
       const flowY = chartY;
 
       ctx.fillStyle = '#ffffff';
