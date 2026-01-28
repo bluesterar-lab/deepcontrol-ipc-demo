@@ -471,6 +471,33 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
             ctx.lineWidth = 3;
             ctx.stroke();
           }
+
+          // 楼层水压显示（仅在阶段1+显示）
+          const floorPressures = [
+            { floor: 5, pressure: 0.45, status: 'normal' },
+            { floor: 4, pressure: 0.43, status: 'normal' },
+            { floor: 3, pressure: 0.42, status: 'normal' },
+            { floor: 2, pressure: 0.41, status: 'normal' },
+            { floor: 1, pressure: 0.40, status: 'normal' }
+          ];
+
+          const fy = floorY + floorHeight / 2;
+          const fp = floorPressures[i];
+          const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.02;
+          const currentPressure = fp.pressure + pressureChange;
+
+          // 水压指示条
+          const barWidth = currentPressure * 80;
+          const barColor = currentPressure > 0.46 ? '#ef4444' : currentPressure < 0.38 ? '#f97316' : '#22c55e';
+
+          ctx.fillStyle = barColor;
+          ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
+
+          // 压力数值
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '10px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(currentPressure.toFixed(3) + ' MPa', buildingX + 35 + barWidth + 5, fy + 4);
         }
 
         // ========== 顶楼（最不利点）压力表和4G模块 ==========
@@ -693,34 +720,6 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
         ctx.arc(flowX, flowY, 5, 0, Math.PI * 2);
         ctx.fillStyle = '#60a5fa';
         ctx.fill();
-
-        // 楼内各楼层水压状态
-        const floorPressures = [
-          { floor: 5, pressure: 0.45, status: 'normal' },
-          { floor: 4, pressure: 0.43, status: 'normal' },
-          { floor: 3, pressure: 0.42, status: 'normal' },
-          { floor: 2, pressure: 0.41, status: 'normal' },
-          { floor: 1, pressure: 0.40, status: 'normal' }
-        ];
-
-        floorPressures.forEach((fp, i) => {
-          const fy = buildingY - floorHeight * floorCount / 2 + i * floorHeight + floorHeight / 2;
-          const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.02;
-          const currentPressure = fp.pressure + pressureChange;
-
-          // 水压指示条
-          const barWidth = currentPressure * 80;
-          const barColor = currentPressure > 0.46 ? '#ef4444' : currentPressure < 0.38 ? '#f97316' : '#22c55e';
-
-          ctx.fillStyle = barColor;
-          ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
-
-          // 压力数值
-          ctx.fillStyle = '#ffffff';
-          ctx.font = '10px system-ui, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText(currentPressure.toFixed(3) + ' MPa', buildingX + 35 + barWidth + 5, fy + 4);
-        });
 
         // 标注：供水管道
         ctx.fillStyle = '#38bdf8';
