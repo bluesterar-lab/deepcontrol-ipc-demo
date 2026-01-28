@@ -337,7 +337,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillStyle = '#22c55e';
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('全感知检测与硬件部署方案', centerX - 80, 35);
+      ctx.fillText('全感知检测与硬件部署方案', centerX - 60, 35);
 
       // ========== 右侧：阶段信息面板 ==========
       const panelX = centerX + 100;
@@ -426,7 +426,7 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       });
 
       // ========== 左侧：主图像区域 ==========
-      const imageCenterX = centerX - 140;
+      const imageCenterX = centerX - 180;
       const imageCenterY = centerY;
 
       // ========== 建筑剖面图（阶段1+显示）==========
