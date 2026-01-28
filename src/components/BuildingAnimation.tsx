@@ -505,23 +505,23 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
             currentPressure = fp.pressure + pressureChange;
             predictedPressure = currentPressure - 0.02;
 
-            // 当前压力条
-            const currentBarWidth = currentPressure * 80;
-            const currentBarColor = currentPressure > 0.42 ? '#f97316' : '#22c55e';
-
-            ctx.fillStyle = currentBarColor;
-            ctx.fillRect(buildingX + 35, fy - 12, currentBarWidth, 8);
-
-            // 预测压力条（虚线框）
-            const predictedBarWidth = predictedPressure * 80;
-            ctx.strokeStyle = '#f97316';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([2, 2]);
-            ctx.strokeRect(buildingX + 35, fy - 2, predictedBarWidth, 8);
-            ctx.setLineDash([]);
-
-            // 当前压力标签和预测压力标签（只在顶层显示）
+            // 当前压力条和预测压力条（只在顶层显示）
             if (i === 0) {
+              // 当前压力条
+              const currentBarWidth = currentPressure * 80;
+              const currentBarColor = currentPressure > 0.42 ? '#f97316' : '#22c55e';
+
+              ctx.fillStyle = currentBarColor;
+              ctx.fillRect(buildingX + 35, fy - 12, currentBarWidth, 8);
+
+              // 预测压力条（虚线框）
+              const predictedBarWidth = predictedPressure * 80;
+              ctx.strokeStyle = '#f97316';
+              ctx.lineWidth = 1;
+              ctx.setLineDash([2, 2]);
+              ctx.strokeRect(buildingX + 35, fy - 2, predictedBarWidth, 8);
+              ctx.setLineDash([]);
+
               // 当前压力标签
               ctx.fillStyle = '#ffffff';
               ctx.font = '9px system-ui, sans-serif';
@@ -531,10 +531,8 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
               // 预测压力标签
               ctx.fillStyle = '#f97316';
               ctx.fillText('预测:', buildingX + 35 + predictedBarWidth + 5, fy + 5);
-            }
 
-            // 预警图标（顶部楼层）
-            if (i === 0) {
+              // 预警图标（顶部楼层）
               ctx.fillStyle = '#f97316';
               ctx.font = '14px system-ui, sans-serif';
               ctx.fillText('⚠️', buildingX - 40, fy + 4);
@@ -547,15 +545,14 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
             const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.01;
             currentPressure += pressureChange;
 
-            // 压力指示条
-            const barWidth = currentPressure * 80;
-            const barColor = currentPressure > 0.42 ? '#22c55e' : '#22c55e';
-
-            ctx.fillStyle = barColor;
-            ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
-
-            // 压力数值（只在顶层显示）
+            // 压力指示条和数值（只在顶层显示）
             if (i === 0) {
+              const barWidth = currentPressure * 80;
+              const barColor = currentPressure > 0.42 ? '#22c55e' : '#22c55e';
+
+              ctx.fillStyle = barColor;
+              ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
+
               ctx.fillStyle = '#ffffff';
               ctx.font = '10px system-ui, sans-serif';
               ctx.textAlign = 'left';
@@ -566,14 +563,14 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
             const pressureChange = Math.sin(time * 2 + i * 0.5) * 0.01;
             currentPressure = fp.pressure + pressureChange;
 
-            const barWidth = currentPressure * 80;
-            const barColor = currentPressure > 0.42 ? '#f97316' : '#22c55e';
-
-            ctx.fillStyle = barColor;
-            ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
-
-            // 压力数值（只在顶层显示）
+            // 压力条和数值（只在顶层显示）
             if (i === 0) {
+              const barWidth = currentPressure * 80;
+              const barColor = currentPressure > 0.42 ? '#f97316' : '#22c55e';
+
+              ctx.fillStyle = barColor;
+              ctx.fillRect(buildingX + 35, fy - 8, barWidth, 16);
+
               ctx.fillStyle = '#ffffff';
               ctx.font = '10px system-ui, sans-serif';
               ctx.textAlign = 'left';
