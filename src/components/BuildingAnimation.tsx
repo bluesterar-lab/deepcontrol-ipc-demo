@@ -328,6 +328,11 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       const centerX = width / 2;
       const centerY = height / 2;
 
+      // 流程阶段变量（全局使用）
+      const cycleTime = time % 8; // 0-8秒循环
+      const currentStage = Math.floor(cycleTime / 2) + 1; // 1-4阶段
+      const stageProgress = (cycleTime % 2) / 2; // 0-1，当前阶段的进度
+
       ctx.fillStyle = '#22c55e';
       ctx.font = 'bold 18px system-ui, sans-serif';
       ctx.textAlign = 'center';
@@ -439,15 +444,19 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.font = 'bold 14px system-ui, sans-serif';
       ctx.fillText('云端平台', cloudX, cloudY + 40);
       
-      // 数据流动画到云端
+      // 数据流动画到云端（仅在阶段1-3显示，与流程步骤同步）
       const dataToCloud = (time * 3) % 1;
       const toCloudX = buildingX + 25 + (cloudX - buildingX - 25) * dataToCloud;
       const toCloudY = topFloorY - 18 + (cloudY - topFloorY + 18) * dataToCloud;
       
-      ctx.beginPath();
-      ctx.arc(toCloudX, toCloudY, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#3b82f6';
-      ctx.fill();
+      // 根据阶段控制数据流显示
+      const showDataFlow = currentStage <= 3;
+      if (showDataFlow) {
+        ctx.beginPath();
+        ctx.arc(toCloudX, toCloudY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = currentStage === 1 ? '#3b82f6' : currentStage === 2 ? '#06b6d4' : '#8b5cf6';
+        ctx.fill();
+      }
       
       // 标注：传输链路1
       ctx.fillStyle = '#94a3b8';
@@ -481,15 +490,19 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.fillRect(-15, -10, 30, 20);
       ctx.restore();
       
-      // 数据流动画到边缘控制器
+      // 数据流动画到边缘控制器（仅在阶段3-4显示）
       const dataToPump = (time * 3 + 0.5) % 1;
       const toPumpX = cloudX + (pumpX - cloudX) * dataToPump;
       const toPumpY = cloudY + (pumpY - cloudY) * dataToPump;
       
-      ctx.beginPath();
-      ctx.arc(toPumpX, toPumpY, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#8b5cf6';
-      ctx.fill();
+      // 根据阶段控制数据流显示
+      const showDecisionFlow = currentStage >= 3;
+      if (showDecisionFlow) {
+        ctx.beginPath();
+        ctx.arc(toPumpX, toPumpY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = currentStage === 3 ? '#8b5cf6' : '#22c55e';
+        ctx.fill();
+      }
       
       // 标注：传输链路2
       ctx.fillStyle = '#94a3b8';
@@ -602,21 +615,24 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 反馈信号动画
-      const feedbackFlow = (time * 3 + 0.3) % 1;
-      const feedbackX = buildingX + 25 + (pumpX - buildingX - 25) * feedbackFlow;
-      const feedbackY = topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5;
-      
-      if (feedbackFlow > 0.5) {
-        const secondPhase = (feedbackFlow - 0.5) * 2;
-        const finalX = buildingX + 25;
-        const finalY = pumpMotorY + secondPhase * (buildingX + 25 - pumpX);
+      // 反馈信号动画（仅在阶段4显示）
+      const showFeedback = currentStage === 4;
+      if (showFeedback) {
+        const feedbackFlow = (time * 3 + 0.3) % 1;
+        const feedbackX = buildingX + 25 + (pumpX - buildingX - 25) * feedbackFlow;
+        const feedbackY = topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5;
+        
+        if (feedbackFlow > 0.5) {
+          const secondPhase = (feedbackFlow - 0.5) * 2;
+          const finalX = buildingX + 25;
+          const finalY = pumpMotorY + secondPhase * (buildingX + 25 - pumpX);
+        }
+        
+        ctx.beginPath();
+        ctx.arc(buildingX + 25, topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#22c55e';
+        ctx.fill();
       }
-      
-      ctx.beginPath();
-      ctx.arc(buildingX + 25, topFloorY - 18 + (pumpMotorY - topFloorY + 18) * feedbackFlow * 0.5, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#8b5cf6';
-      ctx.fill();
 
       // 标注：闭环反馈
       ctx.fillStyle = '#8b5cf6';
@@ -624,32 +640,115 @@ export default function BuildingAnimation({ scene }: BuildingAnimationProps) {
       ctx.textAlign = 'center';
       ctx.fillText('闭环反馈', (buildingX + pumpX) / 2, pumpMotorY - 10);
 
-      // ========== 工作流程说明 ==========
-      const processSteps = [
-        { step: 1, text: '压力表采集', x: centerX - 150, y: centerY + 140 },
-        { step: 2, text: '4G上传云端', x: centerX - 50, y: centerY + 140 },
-        { step: 3, text: '边缘控制决策', x: centerX + 50, y: centerY + 140 },
-        { step: 4, text: '变频泵调节', x: centerX + 150, y: centerY + 140 }
+      // ========== 工作流程说明（分阶段动画）==========
+      const stageTitles = [
+        '',
+        '第1阶段：压力数据采集',
+        '第2阶段：数据上传云端',
+        '第3阶段：智能决策分析',
+        '第4阶段：执行调节指令'
       ];
 
+      const processSteps = [
+        { step: 1, text: '压力表采集', x: centerX - 150, y: centerY + 140, color: '#3b82f6' },
+        { step: 2, text: '4G上传云端', x: centerX - 50, y: centerY + 140, color: '#06b6d4' },
+        { step: 3, text: '边缘控制决策', x: centerX + 50, y: centerY + 140, color: '#8b5cf6' },
+        { step: 4, text: '变频泵调节', x: centerX + 150, y: centerY + 140, color: '#22c55e' }
+      ];
+
+      // 绘制当前阶段标题
+      if (stageTitles[currentStage]) {
+        ctx.fillStyle = processSteps[currentStage - 1].color;
+        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(stageTitles[currentStage], centerX, centerY + 105);
+      }
+
       processSteps.forEach((ps, i) => {
+        const stepNum = i + 1;
+        const isActive = stepNum === currentStage;
+        const isCompleted = stepNum < currentStage;
+        
+        // 计算透明度：当前步骤1，已完成0.6，未完成0.3
+        let alpha = 0.3;
+        if (isActive) alpha = 1;
+        else if (isCompleted) alpha = 0.6;
+        
+        ctx.globalAlpha = alpha;
+        
         ctx.beginPath();
         ctx.arc(ps.x, ps.y, 12, 0, Math.PI * 2);
-        ctx.fillStyle = '#1e293b';
+        ctx.fillStyle = isActive ? ps.color : '#1e293b';
         ctx.fill();
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        
+        // 当前步骤添加脉冲动画效果
+        if (isActive) {
+          const pulseSize = 12 + Math.sin(time * 8) * 3;
+          ctx.beginPath();
+          ctx.arc(ps.x, ps.y, pulseSize, 0, Math.PI * 2);
+          ctx.strokeStyle = ps.color;
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.5;
+          ctx.stroke();
+          ctx.globalAlpha = alpha;
+        } else {
+          ctx.strokeStyle = ps.color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
         
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(String(ps.step), ps.x, ps.y + 4);
         
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '11px system-ui, sans-serif';
+        ctx.fillStyle = isActive ? ps.color : '#94a3b8';
+        ctx.font = isActive ? 'bold 12px system-ui, sans-serif' : '11px system-ui, sans-serif';
         ctx.fillText(ps.text, ps.x, ps.y + 28);
+        
+        ctx.globalAlpha = 1;
       });
+
+      // ========== 流程进度条 ==========
+      const progressBarY = centerY + 185;
+      const progressBarWidth = 340;
+      const progressBarX = centerX - 170;
+      const progressSegmentWidth = progressBarWidth / 4;
+      
+      // 进度条背景
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(progressBarX, progressBarY, progressBarWidth, 6);
+      
+      // 绘制进度段
+      for (let i = 0; i < 4; i++) {
+        const segX = progressBarX + i * progressSegmentWidth;
+        const isCurrentStage = (i + 1) === currentStage;
+        const isCompletedStage = (i + 1) < currentStage;
+        
+        // 进度段颜色
+        if (isCurrentStage) {
+          // 当前阶段：显示填充动画
+          const fillWidth = progressSegmentWidth * stageProgress;
+          ctx.fillStyle = processSteps[i].color;
+          ctx.fillRect(segX, progressBarY, fillWidth, 6);
+        } else if (isCompletedStage) {
+          // 已完成阶段：完全填充
+          ctx.fillStyle = processSteps[i].color;
+          ctx.fillRect(segX, progressBarY, progressSegmentWidth, 6);
+        } else {
+          // 未开始阶段：不填充
+        }
+        
+        // 分隔线
+        if (i > 0) {
+          ctx.beginPath();
+          ctx.moveTo(segX, progressBarY);
+          ctx.lineTo(segX, progressBarY + 6);
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
 
       // 流程箭头
       for (let i = 0; i < 3; i++) {
